@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Device-wise Applicant & Application Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root {
+    --bg-primary: #f4f5f7;
+    --bg-card: #ffffff;
+    --bg-header: #1a1a2e;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-on-dark: #ffffff;
+    --positive: #28a745;
+    --negative: #dc3545;
+    --neutral: #6c757d;
+    --gap: 14px;
+    --radius: 8px;
+    --web-color: #4C72B0;
+    --android-color: #55A868;
+    --ios-color: #DD8452;
+    --mweb-color: #C44E52;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.5; }
+.container { max-width:1440px; margin:0 auto; padding:var(--gap); }
+.header { background:var(--bg-header); color:var(--text-on-dark); padding:18px 24px; border-radius:var(--radius); margin-bottom:var(--gap); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.header h1 { font-size:18px; font-weight:600; }
+.header .subtitle { font-size:12px; opacity:0.7; }
+
+/* Tabs */
+.tabs { display:flex; gap:4px; background:#e9ecef; border-radius:var(--radius); padding:4px; margin-bottom:var(--gap); }
+.tab { padding:8px 18px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text-secondary); transition:all 0.2s; border:none; background:transparent; }
+.tab.active { background:var(--bg-card); color:var(--text-primary); box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.tab:hover:not(.active) { color:var(--text-primary); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Segment toggle */
+.seg-toggle { display:flex; gap:2px; background:rgba(255,255,255,0.15); border-radius:4px; padding:2px; }
+.seg-btn { padding:4px 12px; border-radius:3px; cursor:pointer; font-size:12px; font-weight:500; color:rgba(255,255,255,0.7); transition:all 0.2s; border:none; background:transparent; }
+.seg-btn.active { background:rgba(255,255,255,0.25); color:#fff; }
+
+/* KPIs */
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:var(--gap); margin-bottom:var(--gap); }
+.kpi-card { background:var(--bg-card); border-radius:var(--radius); padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border-left:3px solid transparent; }
+.kpi-card.web { border-left-color:var(--web-color); }
+.kpi-card.android { border-left-color:var(--android-color); }
+.kpi-card.ios { border-left-color:var(--ios-color); }
+.kpi-card.mweb { border-left-color:var(--mweb-color); }
+.kpi-card.total { border-left-color:#333; }
+.kpi-label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+.kpi-value { font-size:22px; font-weight:700; margin-bottom:2px; }
+.kpi-sub { font-size:11px; color:var(--text-secondary); }
+.kpi-change { font-size:12px; font-weight:600; }
+.kpi-change.pos { color:var(--positive); }
+.kpi-change.neg { color:var(--negative); }
+
+/* Charts */
+.chart-row { display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:var(--gap); }
+.chart-full { grid-template-columns:1fr; }
+.chart-three { grid-template-columns:1fr 1fr 1fr; }
+.chart-box { background:var(--bg-card); border-radius:var(--radius); padding:16px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+.chart-box h3 { font-size:13px; font-weight:600; margin-bottom:12px; color:var(--text-primary); }
+.chart-box canvas { max-height:280px; }
+
+/* Insight boxes */
+.insight-row { display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:var(--gap); }
+.insight-box { background:var(--bg-card); border-radius:var(--radius); padding:16px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); border-left:3px solid var(--web-color); }
+.insight-box.warn { border-left-color:var(--negative); }
+.insight-box.good { border-left-color:var(--positive); }
+.insight-box h4 { font-size:13px; font-weight:600; margin-bottom:6px; }
+.insight-box p { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+.insight-box .metric { font-size:18px; font-weight:700; color:var(--text-primary); }
+
+/* Table */
+.table-box { background:var(--bg-card); border-radius:var(--radius); padding:16px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow-x:auto; margin-bottom:var(--gap); }
+.table-box h3 { font-size:13px; font-weight:600; margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { text-align:left; padding:8px 10px; border-bottom:2px solid #dee2e6; color:var(--text-secondary); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+td { padding:8px 10px; border-bottom:1px solid #f0f0f0; }
+tr:hover { background:#f8f9fa; }
+.num { text-align:right; font-variant-numeric:tabular-nums; }
+.chg-pos { color:var(--positive); font-weight:600; }
+.chg-neg { color:var(--negative); font-weight:600; }
+
+/* Section title */
+.section-title { font-size:15px; font-weight:600; margin:20px 0 12px 0; color:var(--text-primary); padding-bottom:6px; border-bottom:2px solid #e9ecef; }
+
+/* Footer */
+.footer { text-align:center; padding:12px; font-size:11px; color:var(--text-secondary); }
+
+@media (max-width:900px) {
+    .kpi-row { grid-template-columns:repeat(2,1fr); }
+    .chart-row { grid-template-columns:1fr; }
+    .chart-three { grid-template-columns:1fr; }
+    .insight-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Device-wise Applicant & Application Analysis</h1>
+            <div class="subtitle">Premium (CTC>=30L, CTC/Exp>=3) &amp; All Applicants | Feb 2026 vs Feb 2025 YoY</div>
+        </div>
+        <div class="seg-toggle">
+            <button class="seg-btn active" onclick="switchSegment('premium')">Premium</button>
+            <button class="seg-btn" onclick="switchSegment('all')">All Applicants</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('overview')">Overview</button>
+        <button class="tab" onclick="switchTab('recovery')">Feb Recovery</button>
+        <button class="tab" onclick="switchTab('device-deep')">Device Deep-Dive</button>
+        <button class="tab" onclick="switchTab('monthly')">Monthly Trends</button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div class="tab-content active" id="tab-overview">
+        <div class="kpi-row" id="kpi-row-main"></div>
+
+        <div class="chart-row">
+            <div class="chart-box">
+                <h3>Feb YoY Change by Device — Applications</h3>
+                <canvas id="chart-yoy-appl"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Feb YoY Change by Device — Applicants</h3>
+                <canvas id="chart-yoy-app"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-box">
+                <h3>Contribution to Total Application Drop</h3>
+                <canvas id="chart-drop-contrib"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Device Share of Applications — Feb 2025 vs 2026</h3>
+                <canvas id="chart-share"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-box">
+                <h3>Apps per Applicant (Engagement) — Feb YoY</h3>
+                <canvas id="chart-ratio"></canvas>
+            </div>
+            <div class="chart-box" id="insight-summary-box">
+                <h3>Key Insights</h3>
+                <div id="insight-summary" style="font-size:12px;line-height:1.8;color:var(--text-secondary)"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: RECOVERY -->
+    <div class="tab-content" id="tab-recovery">
+        <h2 class="section-title">Week-by-Week Recovery Within Feb 2026 (YoY)</h2>
+        <div class="kpi-row" id="kpi-recovery"></div>
+        <div class="chart-row">
+            <div class="chart-box">
+                <h3>Applications YoY% by Week — Device Breakdown</h3>
+                <canvas id="chart-wom-yoy" style="max-height:320px"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Absolute Applications by Week — Feb 2026</h3>
+                <canvas id="chart-wom-abs" style="max-height:320px"></canvas>
+            </div>
+        </div>
+        <div class="table-box">
+            <h3>Detailed Week-by-Week Data</h3>
+            <div id="table-wom"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: DEVICE DEEP DIVE -->
+    <div class="tab-content" id="tab-device-deep">
+        <h2 class="section-title">Day-of-Week Pattern by Device — Feb YoY</h2>
+        <div class="chart-row" id="dow-charts"></div>
+        <h2 class="section-title">Feb Daily Trend by Device</h2>
+        <div class="chart-row chart-full">
+            <div class="chart-box">
+                <h3>Daily Applications by Device — Feb 2026 vs Feb 2025</h3>
+                <canvas id="chart-daily-devices" style="max-height:350px"></canvas>
+            </div>
+        </div>
+        <div class="table-box">
+            <h3>Complete Device Comparison — Feb YoY (Weekday Averages)</h3>
+            <div id="table-device-detail"></div>
+        </div>
+    </div>
+
+    <!-- TAB 4: MONTHLY TRENDS -->
+    <div class="tab-content" id="tab-monthly">
+        <h2 class="section-title">Monthly Trend (Weekday Avg) by Device</h2>
+        <div class="chart-row chart-full">
+            <div class="chart-box">
+                <h3>Monthly Applications by Device</h3>
+                <canvas id="chart-monthly-stack" style="max-height:350px"></canvas>
+            </div>
+        </div>
+        <div class="chart-row chart-full">
+            <div class="chart-box">
+                <h3>Monthly Device Share %</h3>
+                <canvas id="chart-monthly-share" style="max-height:300px"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">Premium Applicants: CTC &ge; 30L and CTC/Exp &ge; 3 | Weekday averages (Mon-Fri) | Data through Mar 4, 2026</div>
+</div>
+
+<script>
+const D = {"january_premium_kpis": {"web": {"applicants_25": 930.52, "applicants_26": 801.5, "applicants_chg": -13.87, "applications_25": 4785.17, "applications_26": 4531.14, "applications_chg": -5.31, "ratio_25": 5.14, "ratio_26": 5.65, "ratio_chg": 9.93}, "android": {"applicants_25": 988.0, "applicants_26": 866.82, "applicants_chg": -12.27, "applications_25": 4891.22, "applications_26": 4104.95, "applications_chg": -16.07, "ratio_25": 4.95, "ratio_26": 4.74, "ratio_chg": -4.34}, "ios": {"applicants_25": 850.74, "applicants_26": 839.18, "applicants_chg": -1.36, "applications_25": 3799.57, "applications_26": 3620.23, "applications_chg": -4.72, "ratio_25": 4.47, "ratio_26": 4.31, "ratio_chg": -3.41}, "mweb": {"applicants_25": 237.57, "applicants_26": 241.36, "applicants_chg": 1.6, "applications_25": 569.52, "applications_26": 505.41, "applications_chg": -11.26, "ratio_25": 2.4, "ratio_26": 2.09, "ratio_chg": -12.65}, "total": {"applicants_25": 2895.52, "applicants_26": 2637.0, "applicants_chg": -8.93, "applications_25": 14045.48, "applications_26": 12761.73, "applications_chg": -9.14, "ratio_25": 4.85, "ratio_26": 4.84, "ratio_chg": -0.23}}, "january_all_kpis": {"web": {"applicants_25": 3642.17, "applicants_26": 3070.64, "applicants_chg": -15.69, "applications_25": 17489.17, "applications_26": 15093.55, "applications_chg": -13.7, "ratio_25": 4.8, "ratio_26": 4.92, "ratio_chg": 2.37}, "android": {"applicants_25": 4170.78, "applicants_26": 3665.59, "applicants_chg": -12.11, "applications_25": 19895.83, "applications_26": 16771.5, "applications_chg": -15.7, "ratio_25": 4.77, "ratio_26": 4.58, "ratio_chg": -4.09}, "ios": {"applicants_25": 2535.96, "applicants_26": 2347.32, "applicants_chg": -7.44, "applications_25": 11224.48, "applications_26": 10654.23, "applications_chg": -5.08, "ratio_25": 4.43, "ratio_26": 4.54, "ratio_chg": 2.55}, "mweb": {"applicants_25": 1468.87, "applicants_26": 1163.14, "applicants_chg": -20.81, "applications_25": 3123.65, "applications_26": 2363.82, "applications_chg": -24.33, "ratio_25": 2.13, "ratio_26": 2.03, "ratio_chg": -4.43}, "total": {"applicants_25": 11445.87, "applicants_26": 9910.45, "applicants_chg": -13.41, "applications_25": 51733.13, "applications_26": 44883.09, "applications_chg": -13.24, "ratio_25": 4.52, "ratio_26": 4.53, "ratio_chg": 0.2}}, "february_premium_kpis": {"web": {"applicants_25": 959.95, "applicants_26": 958.7, "applicants_chg": -0.13, "applications_25": 5324.25, "applications_26": 4899.35, "applications_chg": -7.98, "ratio_25": 5.55, "ratio_26": 5.11, "ratio_chg": -7.86}, "android": {"applicants_25": 993.25, "applicants_26": 975.75, "applicants_chg": -1.76, "applications_25": 5071.65, "applications_26": 4413.75, "applications_chg": -12.97, "ratio_25": 5.11, "ratio_26": 4.52, "ratio_chg": -11.41}, "ios": {"applicants_25": 892.5, "applicants_26": 975.7, "applicants_chg": 9.32, "applications_25": 4285.95, "applications_26": 4052.65, "applications_chg": -5.44, "ratio_25": 4.8, "ratio_26": 4.15, "ratio_chg": -13.51}, "mweb": {"applicants_25": 237.3, "applicants_26": 316.85, "applicants_chg": 33.52, "applications_25": 545.75, "applications_26": 671.2, "applications_chg": 22.99, "ratio_25": 2.3, "ratio_26": 2.12, "ratio_chg": -7.89}, "total": {"applicants_25": 2968.6, "applicants_26": 3083.55, "applicants_chg": 3.87, "applications_25": 15227.6, "applications_26": 14036.95, "applications_chg": -7.82, "ratio_25": 5.13, "ratio_26": 4.55, "ratio_chg": -11.26}}, "february_all_kpis": {"web": {"applicants_25": 3702.3, "applicants_26": 3374.55, "applicants_chg": -8.85, "applications_25": 17913.45, "applications_26": 16442.9, "applications_chg": -8.21, "ratio_25": 4.84, "ratio_26": 4.87, "ratio_chg": 0.71}, "android": {"applicants_25": 4175.15, "applicants_26": 3654.1, "applicants_chg": -12.48, "applications_25": 19816.55, "applications_26": 16225.7, "applications_chg": -18.12, "ratio_25": 4.75, "ratio_26": 4.44, "ratio_chg": -6.44}, "ios": {"applicants_25": 2615.35, "applicants_26": 2645.9, "applicants_chg": 1.17, "applications_25": 12005.75, "applications_26": 11210.55, "applications_chg": -6.62, "ratio_25": 4.59, "ratio_26": 4.24, "ratio_chg": -7.7}, "mweb": {"applicants_25": 1462.05, "applicants_26": 1304.2, "applicants_chg": -10.8, "applications_25": 3157.1, "applications_26": 2578.95, "applications_chg": -18.31, "ratio_25": 2.16, "ratio_26": 1.98, "ratio_chg": -8.43}, "total": {"applicants_25": 11575.8, "applicants_26": 10586.5, "applicants_chg": -8.55, "applications_25": 52892.85, "applications_26": 46458.1, "applications_chg": -12.17, "ratio_25": 4.57, "ratio_26": 4.39, "ratio_chg": -3.96}}, "feb_wom_premium": {"web": {"W1": {"appl_25": 5688.6, "appl_26": 4661.0, "appl_yoy": -18.06, "app_25": 991.2, "app_26": 935.8, "app_yoy": -5.59}, "W2": {"appl_25": 5573.8, "appl_26": 4651.8, "appl_yoy": -16.54, "app_25": 965.0, "app_26": 907.0, "app_yoy": -6.01}, "W3": {"appl_25": 5061.4, "appl_26": 5141.8, "appl_yoy": 1.59, "app_25": 974.4, "app_26": 968.2, "app_yoy": -0.64}, "W4": {"appl_25": 4973.2, "appl_26": 5142.8, "appl_yoy": 3.41, "app_25": 909.2, "app_26": 1023.8, "app_yoy": 12.6}}, "android": {"W1": {"appl_25": 5032.0, "appl_26": 4508.6, "appl_yoy": -10.4, "app_25": 1018.0, "app_26": 962.4, "app_yoy": -5.46}, "W2": {"appl_25": 5033.0, "appl_26": 4409.0, "appl_yoy": -12.4, "app_25": 975.0, "app_26": 969.6, "app_yoy": -0.55}, "W3": {"appl_25": 5177.4, "appl_26": 4284.8, "appl_yoy": -17.24, "app_25": 1005.0, "app_26": 991.2, "app_yoy": -1.37}, "W4": {"appl_25": 5044.2, "appl_26": 4452.6, "appl_yoy": -11.73, "app_25": 975.0, "app_26": 979.8, "app_yoy": 0.49}}, "ios": {"W1": {"appl_25": 4087.6, "appl_26": 3892.0, "appl_yoy": -4.79, "app_25": 896.6, "app_26": 949.2, "app_yoy": 5.87}, "W2": {"appl_25": 4388.0, "appl_26": 3929.2, "appl_yoy": -10.46, "app_25": 887.0, "app_26": 945.6, "app_yoy": 6.61}, "W3": {"appl_25": 4388.8, "appl_26": 4294.6, "appl_yoy": -2.15, "app_25": 929.4, "app_26": 998.8, "app_yoy": 7.47}, "W4": {"appl_25": 4279.4, "appl_26": 4094.8, "appl_yoy": -4.31, "app_25": 857.0, "app_26": 1009.2, "app_yoy": 17.76}}, "mweb": {"W1": {"appl_25": 543.4, "appl_26": 606.6, "appl_yoy": 11.63, "app_25": 244.0, "app_26": 299.4, "app_yoy": 22.7}, "W2": {"appl_25": 541.2, "appl_26": 574.6, "appl_yoy": 6.17, "app_25": 237.8, "app_26": 276.4, "app_yoy": 16.23}, "W3": {"appl_25": 587.6, "appl_26": 717.4, "appl_yoy": 22.09, "app_25": 259.8, "app_26": 333.0, "app_yoy": 28.18}, "W4": {"appl_25": 510.8, "appl_26": 786.2, "appl_yoy": 53.92, "app_25": 207.6, "app_26": 358.6, "app_yoy": 72.74}}, "total": {"W1": {"appl_25": 15351.6, "appl_26": 13668.2, "appl_yoy": -10.97}, "W2": {"appl_25": 15536.0, "appl_26": 13564.6, "appl_yoy": -12.69}, "W3": {"appl_25": 15215.2, "appl_26": 14438.6, "appl_yoy": -5.1}, "W4": {"appl_25": 14807.6, "appl_26": 14476.4, "appl_yoy": -2.24}}}, "feb_wom_all": {"web": {"W1": {"appl_25": 18493.4, "appl_26": 17434.6, "appl_yoy": -5.73, "app_25": 3842.6, "app_26": 3524.4, "app_yoy": -8.28}, "W2": {"appl_25": 18189.8, "appl_26": 17171.8, "appl_yoy": -5.6, "app_25": 3715.8, "app_26": 3173.4, "app_yoy": -14.6}, "W3": {"appl_25": 18091.2, "appl_26": 15081.0, "appl_yoy": -16.64, "app_25": 3842.8, "app_26": 3279.8, "app_yoy": -14.65}, "W4": {"appl_25": 16879.4, "appl_26": 16084.2, "appl_yoy": -4.71, "app_25": 3408.0, "app_26": 3520.6, "app_yoy": 3.3}}, "android": {"W1": {"appl_25": 20261.2, "appl_26": 17077.0, "appl_yoy": -15.72, "app_25": 4328.2, "app_26": 3806.0, "app_yoy": -12.07}, "W2": {"appl_25": 19279.2, "appl_26": 15307.8, "appl_yoy": -20.6, "app_25": 4060.2, "app_26": 3569.0, "app_yoy": -12.1}, "W3": {"appl_25": 20082.2, "appl_26": 16392.2, "appl_yoy": -18.37, "app_25": 4249.0, "app_26": 3625.8, "app_yoy": -14.67}, "W4": {"appl_25": 19643.6, "appl_26": 16125.8, "appl_yoy": -17.91, "app_25": 4063.2, "app_26": 3615.6, "app_yoy": -11.02}}, "ios": {"W1": {"appl_25": 11973.2, "appl_26": 11199.8, "appl_yoy": -6.46, "app_25": 2674.6, "app_26": 2656.2, "app_yoy": -0.69}, "W2": {"appl_25": 11919.8, "appl_26": 10692.2, "appl_yoy": -10.3, "app_25": 2578.2, "app_26": 2510.0, "app_yoy": -2.65}, "W3": {"appl_25": 12426.6, "appl_26": 11368.8, "appl_yoy": -8.51, "app_25": 2696.0, "app_26": 2658.6, "app_yoy": -1.39}, "W4": {"appl_25": 11703.4, "appl_26": 11581.4, "appl_yoy": -1.04, "app_25": 2512.6, "app_26": 2758.8, "app_yoy": 9.8}}, "mweb": {"W1": {"appl_25": 3360.4, "appl_26": 2754.2, "appl_yoy": -18.04, "app_25": 1564.8, "app_26": 1411.8, "app_yoy": -9.78}, "W2": {"appl_25": 3145.0, "appl_26": 2241.2, "appl_yoy": -28.74, "app_25": 1438.6, "app_26": 1135.0, "app_yoy": -21.1}, "W3": {"appl_25": 3309.2, "appl_26": 2510.2, "appl_yoy": -24.14, "app_25": 1581.4, "app_26": 1262.6, "app_yoy": -20.16}, "W4": {"appl_25": 2813.8, "appl_26": 2810.2, "appl_yoy": -0.13, "app_25": 1263.4, "app_26": 1407.4, "app_yoy": 11.4}}, "total": {"W1": {"appl_25": 54088.2, "appl_26": 48465.6, "appl_yoy": -10.4}, "W2": {"appl_25": 52533.8, "appl_26": 45413.0, "appl_yoy": -13.55}, "W3": {"appl_25": 53909.2, "appl_26": 45352.2, "appl_yoy": -15.87}, "W4": {"appl_25": 51040.2, "appl_26": 46601.6, "appl_yoy": -8.7}}}, "feb_share_premium": {"2025": {"web": 34.96, "android": 33.31, "ios": 28.15, "mweb": 3.58}, "2026": {"web": 34.9, "android": 31.44, "ios": 28.87, "mweb": 4.78}}, "feb_share_all": {"2025": {"web": 33.87, "android": 37.47, "ios": 22.7, "mweb": 5.97}, "2026": {"web": 35.39, "android": 34.93, "ios": 24.13, "mweb": 5.55}}, "feb_daily_premium": {"2025": [{"date": "2025-02-01", "dow": 5, "total": 8535, "web": 2790.0, "android": 3030, "ios": 2309, "mweb": 406}, {"date": "2025-02-02", "dow": 6, "total": 8221, "web": 3142.0, "android": 2877, "ios": 1918, "mweb": 284}, {"date": "2025-02-03", "dow": 0, "total": 15232, "web": 5868.0, "android": 4723, "ios": 4151, "mweb": 490}, {"date": "2025-02-04", "dow": 1, "total": 15863, "web": 5528.0, "android": 5439, "ios": 4355, "mweb": 541}, {"date": "2025-02-05", "dow": 2, "total": 14642, "web": 5011.0, "android": 5026, "ios": 4029, "mweb": 576}, {"date": "2025-02-06", "dow": 3, "total": 15939, "web": 6016.0, "android": 5372, "ios": 3982, "mweb": 569}, {"date": "2025-02-07", "dow": 4, "total": 15082, "web": 6020.0, "android": 4600, "ios": 3921, "mweb": 541}, {"date": "2025-02-08", "dow": 5, "total": 8271, "web": 3025.0, "android": 2861, "ios": 2138, "mweb": 247}, {"date": "2025-02-09", "dow": 6, "total": 13061, "web": 6795.0, "android": 3232, "ios": 2645, "mweb": 389}, {"date": "2025-02-10", "dow": 0, "total": 18336, "web": 8582.0, "android": 4997, "ios": 4352, "mweb": 405}, {"date": "2025-02-11", "dow": 1, "total": 16570, "web": 5208.0, "android": 5874, "ios": 4939, "mweb": 549}, {"date": "2025-02-12", "dow": 2, "total": 15689, "web": 5491.0, "android": 4988, "ios": 4611, "mweb": 599}, {"date": "2025-02-13", "dow": 3, "total": 15199, "web": 5066.0, "android": 4900, "ios": 4632, "mweb": 601}, {"date": "2025-02-14", "dow": 4, "total": 11886, "web": 3522.0, "android": 4406, "ios": 3406, "mweb": 552}, {"date": "2025-02-15", "dow": 5, "total": 8733, "web": 2623.0, "android": 3308, "ios": 2439, "mweb": 363}, {"date": "2025-02-16", "dow": 6, "total": 8991, "web": 3153.0, "android": 3049, "ios": 2419, "mweb": 370}, {"date": "2025-02-17", "dow": 0, "total": 15585, "web": 5722.0, "android": 5071, "ios": 4300, "mweb": 492}, {"date": "2025-02-18", "dow": 1, "total": 17562, "web": 6009.0, "android": 6113, "ios": 4698, "mweb": 742}, {"date": "2025-02-19", "dow": 2, "total": 14902, "web": 4582.0, "android": 5112, "ios": 4548, "mweb": 660}, {"date": "2025-02-20", "dow": 3, "total": 15300, "web": 5229.0, "android": 4896, "ios": 4600, "mweb": 575}, {"date": "2025-02-21", "dow": 4, "total": 12727, "web": 3765.0, "android": 4695, "ios": 3798, "mweb": 469}, {"date": "2025-02-22", "dow": 5, "total": 7803, "web": 2492.0, "android": 2830, "ios": 2188, "mweb": 293}, {"date": "2025-02-23", "dow": 6, "total": 7198, "web": 2299.0, "android": 2731, "ios": 1876, "mweb": 292}, {"date": "2025-02-24", "dow": 0, "total": 16525, "web": 5990.0, "android": 5240, "ios": 4816, "mweb": 479}, {"date": "2025-02-25", "dow": 1, "total": 15383, "web": 4790.0, "android": 5588, "ios": 4602, "mweb": 403}, {"date": "2025-02-26", "dow": 2, "total": 13851, "web": 4442.0, "android": 4782, "ios": 4051, "mweb": 576}, {"date": "2025-02-27", "dow": 3, "total": 15221, "web": 5077.0, "android": 5627, "ios": 4019, "mweb": 498}, {"date": "2025-02-28", "dow": 4, "total": 13058, "web": 4567.0, "android": 3984, "ios": 3909, "mweb": 598}], "2026": [{"date": "2026-02-01", "dow": 6, "total": 7353, "web": 2451.0, "android": 2308, "ios": 2143, "mweb": 451}, {"date": "2026-02-02", "dow": 0, "total": 15298, "web": 5368.0, "android": 4865, "ios": 4467, "mweb": 598}, {"date": "2026-02-03", "dow": 1, "total": 14489, "web": 4607.0, "android": 5187, "ios": 4165, "mweb": 530}, {"date": "2026-02-04", "dow": 2, "total": 14385, "web": 4850.0, "android": 4859, "ios": 3992, "mweb": 684}, {"date": "2026-02-05", "dow": 3, "total": 13015, "web": 4661.0, "android": 3976, "ios": 3685, "mweb": 693}, {"date": "2026-02-06", "dow": 4, "total": 11154, "web": 3819.0, "android": 3656, "ios": 3151, "mweb": 528}, {"date": "2026-02-07", "dow": 5, "total": 7302, "web": 2040.0, "android": 2891, "ios": 2100, "mweb": 271}, {"date": "2026-02-08", "dow": 6, "total": 7787, "web": 2524.0, "android": 2655, "ios": 2264, "mweb": 344}, {"date": "2026-02-09", "dow": 0, "total": 14733, "web": 5484.0, "android": 4362, "ios": 4305, "mweb": 582}, {"date": "2026-02-10", "dow": 1, "total": 13547, "web": 4836.0, "android": 4534, "ios": 3773, "mweb": 404}, {"date": "2026-02-11", "dow": 2, "total": 15325, "web": 5359.0, "android": 5138, "ios": 4165, "mweb": 663}, {"date": "2026-02-12", "dow": 3, "total": 13155, "web": 4033.0, "android": 4318, "ios": 4106, "mweb": 698}, {"date": "2026-02-13", "dow": 4, "total": 11063, "web": 3547.0, "android": 3693, "ios": 3297, "mweb": 526}, {"date": "2026-02-14", "dow": 5, "total": 7316, "web": 2286.0, "android": 2310, "ios": 2411, "mweb": 309}, {"date": "2026-02-15", "dow": 6, "total": 8566, "web": 2739.0, "android": 3225, "ios": 2248, "mweb": 354}, {"date": "2026-02-16", "dow": 0, "total": 15326, "web": 5737.0, "android": 4338, "ios": 4520, "mweb": 731}, {"date": "2026-02-17", "dow": 1, "total": 15981, "web": 6113.0, "android": 4604, "ios": 4556, "mweb": 708}, {"date": "2026-02-18", "dow": 2, "total": 13969, "web": 4596.0, "android": 4262, "ios": 4347, "mweb": 764}, {"date": "2026-02-19", "dow": 3, "total": 13885, "web": 4667.0, "android": 4049, "ios": 4411, "mweb": 758}, {"date": "2026-02-20", "dow": 4, "total": 13032, "web": 4596.0, "android": 4171, "ios": 3639, "mweb": 626}, {"date": "2026-02-21", "dow": 5, "total": 8022, "web": 2598.0, "android": 2657, "ios": 2365, "mweb": 402}, {"date": "2026-02-22", "dow": 6, "total": 9042, "web": 3093.0, "android": 2724, "ios": 2689, "mweb": 536}, {"date": "2026-02-23", "dow": 0, "total": 16330, "web": 6247.0, "android": 4966, "ios": 4297, "mweb": 820}, {"date": "2026-02-24", "dow": 1, "total": 15276, "web": 5276.0, "android": 4826, "ios": 4495, "mweb": 679}, {"date": "2026-02-25", "dow": 2, "total": 14770, "web": 5089.0, "android": 4642, "ios": 4275, "mweb": 764}, {"date": "2026-02-26", "dow": 3, "total": 14031, "web": 4773.0, "android": 4176, "ios": 4209, "mweb": 873}, {"date": "2026-02-27", "dow": 4, "total": 11975, "web": 4329.0, "android": 3653, "ios": 3198, "mweb": 795}, {"date": "2026-02-28", "dow": 5, "total": 7976, "web": 2419.0, "android": 2664, "ios": 2420, "mweb": 473}]}, "feb_daily_all": {"2025": [{"date": "2025-02-01", "dow": 5, "total": 31699, "web": 9332, "android": 13236, "ios": 7149, "mweb": 1982}, {"date": "2025-02-02", "dow": 6, "total": 31352, "web": 9677, "android": 13592, "ios": 6427, "mweb": 1656}, {"date": "2025-02-03", "dow": 0, "total": 55959, "web": 20004, "android": 20664, "ios": 12010, "mweb": 3281}, {"date": "2025-02-04", "dow": 1, "total": 56672, "web": 18731, "android": 21541, "ios": 13039, "mweb": 3361}, {"date": "2025-02-05", "dow": 2, "total": 54807, "web": 18617, "android": 20303, "ios": 12421, "mweb": 3466}, {"date": "2025-02-06", "dow": 3, "total": 55127, "web": 19180, "android": 20485, "ios": 11909, "mweb": 3553}, {"date": "2025-02-07", "dow": 4, "total": 47876, "web": 15935, "android": 18313, "ios": 10487, "mweb": 3141}, {"date": "2025-02-08", "dow": 5, "total": 30441, "web": 10057, "android": 12609, "ios": 6174, "mweb": 1601}, {"date": "2025-02-09", "dow": 6, "total": 33202, "web": 12698, "android": 12128, "ios": 6239, "mweb": 2137}, {"date": "2025-02-10", "dow": 0, "total": 53197, "web": 20166, "android": 18753, "ios": 11857, "mweb": 2421}, {"date": "2025-02-11", "dow": 1, "total": 58572, "web": 20064, "android": 21617, "ios": 13361, "mweb": 3530}, {"date": "2025-02-12", "dow": 2, "total": 55728, "web": 19063, "android": 20283, "ios": 12851, "mweb": 3531}, {"date": "2025-02-13", "dow": 3, "total": 53333, "web": 18368, "android": 19346, "ios": 12243, "mweb": 3376}, {"date": "2025-02-14", "dow": 4, "total": 41839, "web": 13288, "android": 16397, "ios": 9287, "mweb": 2867}, {"date": "2025-02-15", "dow": 5, "total": 29445, "web": 9058, "android": 12421, "ios": 6269, "mweb": 1697}, {"date": "2025-02-16", "dow": 6, "total": 29960, "web": 9770, "android": 11740, "ios": 6363, "mweb": 2087}, {"date": "2025-02-17", "dow": 0, "total": 54258, "web": 19738, "android": 19555, "ios": 11844, "mweb": 3121}, {"date": "2025-02-18", "dow": 1, "total": 58157, "web": 19210, "android": 21369, "ios": 13909, "mweb": 3669}, {"date": "2025-02-19", "dow": 2, "total": 56598, "web": 18440, "android": 21297, "ios": 13213, "mweb": 3648}, {"date": "2025-02-20", "dow": 3, "total": 53516, "web": 18123, "android": 19898, "ios": 12261, "mweb": 3234}, {"date": "2025-02-21", "dow": 4, "total": 47017, "web": 14945, "android": 18292, "ios": 10906, "mweb": 2874}, {"date": "2025-02-22", "dow": 5, "total": 29824, "web": 9192, "android": 12554, "ios": 6239, "mweb": 1839}, {"date": "2025-02-23", "dow": 6, "total": 27019, "web": 7901, "android": 11244, "ios": 6053, "mweb": 1821}, {"date": "2025-02-24", "dow": 0, "total": 55822, "web": 19739, "android": 20258, "ios": 12783, "mweb": 3042}, {"date": "2025-02-25", "dow": 1, "total": 53301, "web": 16918, "android": 21215, "ios": 12890, "mweb": 2278}, {"date": "2025-02-26", "dow": 2, "total": 46850, "web": 15050, "android": 18263, "ios": 10692, "mweb": 2845}, {"date": "2025-02-27", "dow": 3, "total": 51601, "web": 17173, "android": 20758, "ios": 10946, "mweb": 2724}, {"date": "2025-02-28", "dow": 4, "total": 47627, "web": 15517, "android": 17724, "ios": 11206, "mweb": 3180}], "2026": [{"date": "2026-02-01", "dow": 6, "total": 26539, "web": 9154, "android": 10230, "ios": 5490, "mweb": 1665}, {"date": "2026-02-02", "dow": 0, "total": 55284, "web": 21634, "android": 18461, "ios": 12407, "mweb": 2782}, {"date": "2026-02-03", "dow": 1, "total": 54224, "web": 19785, "android": 19039, "ios": 12566, "mweb": 2834}, {"date": "2026-02-04", "dow": 2, "total": 51218, "web": 18468, "android": 18214, "ios": 11534, "mweb": 3002}, {"date": "2026-02-05", "dow": 3, "total": 45675, "web": 15739, "android": 16194, "ios": 10912, "mweb": 2830}, {"date": "2026-02-06", "dow": 4, "total": 35927, "web": 11547, "android": 13477, "ios": 8580, "mweb": 2323}, {"date": "2026-02-07", "dow": 5, "total": 25162, "web": 6986, "android": 11049, "ios": 5916, "mweb": 1211}, {"date": "2026-02-08", "dow": 6, "total": 26136, "web": 9080, "android": 9582, "ios": 6104, "mweb": 1370}, {"date": "2026-02-09", "dow": 0, "total": 51578, "web": 21365, "android": 16013, "ios": 11775, "mweb": 2425}, {"date": "2026-02-10", "dow": 1, "total": 49583, "web": 21259, "android": 15960, "ios": 10495, "mweb": 1869}, {"date": "2026-02-11", "dow": 2, "total": 48465, "web": 17501, "android": 16984, "ios": 11281, "mweb": 2699}, {"date": "2026-02-12", "dow": 3, "total": 43110, "web": 14393, "android": 15212, "ios": 10966, "mweb": 2539}, {"date": "2026-02-13", "dow": 4, "total": 34329, "web": 11341, "android": 12370, "ios": 8944, "mweb": 1674}, {"date": "2026-02-14", "dow": 5, "total": 22646, "web": 7037, "android": 8773, "ios": 5625, "mweb": 1211}, {"date": "2026-02-15", "dow": 6, "total": 24417, "web": 7227, "android": 10107, "ios": 5821, "mweb": 1262}, {"date": "2026-02-16", "dow": 0, "total": 45465, "web": 15449, "android": 15731, "ios": 11832, "mweb": 2453}, {"date": "2026-02-17", "dow": 1, "total": 47263, "web": 16341, "android": 16314, "ios": 12314, "mweb": 2294}, {"date": "2026-02-18", "dow": 2, "total": 45421, "web": 15050, "android": 16153, "ios": 11598, "mweb": 2620}, {"date": "2026-02-19", "dow": 3, "total": 46696, "web": 15707, "android": 16747, "ios": 11499, "mweb": 2743}, {"date": "2026-02-20", "dow": 4, "total": 41916, "web": 12858, "android": 17016, "ios": 9601, "mweb": 2441}, {"date": "2026-02-21", "dow": 5, "total": 25310, "web": 7934, "android": 9620, "ios": 6160, "mweb": 1596}, {"date": "2026-02-22", "dow": 6, "total": 29144, "web": 9282, "android": 10245, "ios": 7708, "mweb": 1909}, {"date": "2026-02-23", "dow": 0, "total": 52403, "web": 19101, "android": 17606, "ios": 12567, "mweb": 3129}, {"date": "2026-02-24", "dow": 1, "total": 48944, "web": 16571, "android": 17607, "ios": 12351, "mweb": 2415}, {"date": "2026-02-25", "dow": 2, "total": 47135, "web": 15967, "android": 16532, "ios": 11839, "mweb": 2797}, {"date": "2026-02-26", "dow": 3, "total": 45592, "web": 15308, "android": 15627, "ios": 11652, "mweb": 3005}, {"date": "2026-02-27", "dow": 4, "total": 38934, "web": 13474, "android": 13257, "ios": 9498, "mweb": 2705}, {"date": "2026-02-28", "dow": 5, "total": 25451, "web": 7587, "android": 10039, "ios": 6124, "mweb": 1701}]}, "feb_dow_premium": {"web": {"2025": [6540.5, 5383.75, 4881.5, 5347.0, 4468.5], "2026": [5709.0, 5208.0, 4973.5, 4533.5, 4072.75]}, "android": {"2025": [5007.75, 5753.5, 4977.0, 5198.75, 4421.25], "2026": [4632.75, 4787.75, 4725.25, 4129.75, 3793.25]}, "ios": {"2025": [4404.75, 4648.5, 4309.75, 4308.25, 3758.5], "2026": [4397.25, 4247.25, 4194.75, 4102.75, 3321.25]}, "mweb": {"2025": [466.5, 558.75, 602.75, 560.75, 540.0], "2026": [682.75, 580.25, 718.75, 755.5, 618.75]}}, "feb_dow_all": {"web": {"2025": [19911.75, 18730.75, 17792.5, 18211.0, 14921.25], "2026": [19387.25, 18489.0, 16746.5, 15286.75, 12305.0]}, "android": {"2025": [19807.5, 21435.5, 20036.5, 20121.75, 17681.5], "2026": [16952.75, 17230.0, 16970.75, 15945.0, 14030.0]}, "ios": {"2025": [12123.5, 13299.75, 12294.25, 11839.75, 10471.5], "2026": [12145.25, 11931.5, 11563.0, 11257.25, 9155.75]}, "mweb": {"2025": [2966.25, 3209.5, 3372.5, 3221.75, 3015.5], "2026": [2697.25, 2353.0, 2779.5, 2779.25, 2285.75]}}, "feb_drop_contrib_premium": {"web": {"absolute_drop": -424.9, "pct_of_total_drop": 35.69}, "android": {"absolute_drop": -657.9, "pct_of_total_drop": 55.26}, "ios": {"absolute_drop": -233.3, "pct_of_total_drop": 19.59}, "mweb": {"absolute_drop": 125.45, "pct_of_total_drop": -10.54}, "total_drop": -1190.65}, "feb_drop_contrib_all": {"web": {"absolute_drop": -1470.55, "pct_of_total_drop": 22.85}, "android": {"absolute_drop": -3590.85, "pct_of_total_drop": 55.8}, "ios": {"absolute_drop": -795.2, "pct_of_total_drop": 12.36}, "mweb": {"absolute_drop": -578.15, "pct_of_total_drop": 8.98}, "total_drop": -6434.75}, "monthly_trend_premium": [{"ym": "2025-01", "total": 14045.48, "web": 4785.17, "android": 4891.22, "ios": 3799.57, "mweb": 569.52}, {"ym": "2025-02", "total": 15227.6, "web": 5324.25, "android": 5071.65, "ios": 4285.95, "mweb": 545.75}, {"ym": "2025-03", "total": 14394.71, "web": 4809.1, "android": 5114.76, "ios": 3937.52, "mweb": 533.33}, {"ym": "2025-04", "total": 14454.73, "web": 5493.23, "android": 4886.09, "ios": 3512.23, "mweb": 563.18}, {"ym": "2025-05", "total": 14879.27, "web": 8588.64, "android": 5040.59, "ios": 724.64, "mweb": 525.41}, {"ym": "2025-06", "total": 15643.62, "web": 5554.52, "android": 5003.38, "ios": 4534.05, "mweb": 551.67}, {"ym": "2025-07", "total": 15424.13, "web": 5521.35, "android": 5153.7, "ios": 4159.7, "mweb": 589.39}, {"ym": "2025-08", "total": 13299.38, "web": 4870.67, "android": 4494.38, "ios": 3354.05, "mweb": 580.29}, {"ym": "2025-09", "total": 13406.86, "web": 4934.27, "android": 4289.68, "ios": 3589.32, "mweb": 593.59}, {"ym": "2025-10", "total": 10896.52, "web": 3954.3, "android": 3371.48, "ios": 3157.26, "mweb": 413.48}, {"ym": "2025-11", "total": 12676.35, "web": 4608.05, "android": 4062.55, "ios": 3534.0, "mweb": 471.75}, {"ym": "2025-12", "total": 12042.57, "web": 4356.78, "android": 3953.39, "ios": 3299.0, "mweb": 433.39}, {"ym": "2026-01", "total": 12761.73, "web": 4531.14, "android": 4104.95, "ios": 3620.23, "mweb": 505.41}, {"ym": "2026-02", "total": 14036.95, "web": 4899.35, "android": 4413.75, "ios": 4052.65, "mweb": 671.2}, {"ym": "2026-03", "total": 12161.67, "web": 4684.0, "android": 3556.33, "ios": 3320.33, "mweb": 601.0}], "monthly_trend_all": [{"ym": "2025-01", "total": 51733.13, "web": 17489.17, "android": 19895.83, "ios": 11224.48, "mweb": 3123.65}, {"ym": "2025-02", "total": 52892.85, "web": 17913.45, "android": 19816.55, "ios": 12005.75, "mweb": 3157.1}, {"ym": "2025-03", "total": 51417.95, "web": 17296.24, "android": 19869.62, "ios": 11270.0, "mweb": 2982.1}, {"ym": "2025-04", "total": 51728.91, "web": 18901.91, "android": 19903.86, "ios": 9931.59, "mweb": 2991.55}, {"ym": "2025-05", "total": 52074.82, "web": 27019.91, "android": 20244.91, "ios": 2206.41, "mweb": 2603.55}, {"ym": "2025-06", "total": 55139.81, "web": 18479.29, "android": 20705.62, "ios": 13105.29, "mweb": 2849.62}, {"ym": "2025-07", "total": 55058.0, "web": 19186.09, "android": 20376.04, "ios": 12379.65, "mweb": 3116.22}, {"ym": "2025-08", "total": 48559.1, "web": 16911.81, "android": 18443.71, "ios": 10151.33, "mweb": 3052.24}, {"ym": "2025-09", "total": 48941.27, "web": 17160.68, "android": 17912.64, "ios": 10740.59, "mweb": 3127.36}, {"ym": "2025-10", "total": 39869.83, "web": 13736.48, "android": 14852.22, "ios": 8987.35, "mweb": 2293.78}, {"ym": "2025-11", "total": 46601.0, "web": 15833.15, "android": 17661.75, "ios": 10440.9, "mweb": 2665.2}, {"ym": "2025-12", "total": 42652.26, "web": 14415.09, "android": 16468.7, "ios": 9469.91, "mweb": 2298.57}, {"ym": "2026-01", "total": 44883.09, "web": 15093.55, "android": 16771.5, "ios": 10654.23, "mweb": 2363.82}, {"ym": "2026-02", "total": 46458.1, "web": 16442.9, "android": 16225.7, "ios": 11210.55, "mweb": 2578.95}, {"ym": "2026-03", "total": 35914.0, "web": 13618.67, "android": 12009.67, "ios": 8236.67, "mweb": 2049.0}]};
+
+const COLORS = { web:'#4C72B0', android:'#55A868', ios:'#DD8452', mweb:'#C44E52' };
+const LABELS = { web:'Web (Desktop)', android:'Android', ios:'iOS', mweb:'Mobile Web' };
+const DEVICES = ['web','android','ios','mweb'];
+let segment = 'premium';
+let charts = {};
+
+function fmt(v, dec=0) {
+    if (v === null || v === undefined) return '—';
+    return Math.round(v).toLocaleString();
+}
+function fmtPct(v) {
+    if (v === null || v === undefined) return '—';
+    const sign = v >= 0 ? '+' : '';
+    return sign + v.toFixed(1) + '%';
+}
+function chgClass(v) { return v >= 0 ? 'pos' : 'neg'; }
+function chgTd(v) { return `<td class="num ${v>=0?'chg-pos':'chg-neg'}">${fmtPct(v)}</td>`; }
+
+function switchSegment(seg) {
+    segment = seg;
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.seg-btn').forEach(b => { if(b.textContent.toLowerCase().includes(seg==='premium'?'prem':'all')) b.classList.add('active'); });
+    renderAll();
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-'+tab).classList.add('active');
+}
+
+function destroyCharts() {
+    Object.values(charts).forEach(c => { if(c && c.destroy) c.destroy(); });
+    charts = {};
+}
+
+function renderAll() {
+    destroyCharts();
+    renderOverview();
+    renderRecovery();
+    renderDeviceDeep();
+    renderMonthly();
+}
+
+function renderOverview() {
+    const kpis = D[`february_${segment}_kpis`];
+    let html = '';
+    // Total KPI first
+    const t = kpis.total;
+    html += `<div class="kpi-card total">
+        <div class="kpi-label">Total</div>
+        <div class="kpi-value">${fmt(t.applications_26)}</div>
+        <div class="kpi-change ${chgClass(t.applications_chg)}">${fmtPct(t.applications_chg)} YoY</div>
+        <div class="kpi-sub">Applicants: ${fmtPct(t.applicants_chg)}</div>
+    </div>`;
+    DEVICES.forEach(dev => {
+        const d = kpis[dev];
+        html += `<div class="kpi-card ${dev}">
+            <div class="kpi-label">${LABELS[dev]}</div>
+            <div class="kpi-value">${fmt(d.applications_26)}</div>
+            <div class="kpi-change ${chgClass(d.applications_chg)}">${fmtPct(d.applications_chg)} YoY</div>
+            <div class="kpi-sub">Applicants: ${fmtPct(d.applicants_chg)}</div>
+        </div>`;
+    });
+    document.getElementById('kpi-row-main').innerHTML = html;
+
+    // YoY bar charts
+    const yoyAppl = DEVICES.map(d => kpis[d].applications_chg);
+    const yoyApp = DEVICES.map(d => kpis[d].applicants_chg);
+    const labels = DEVICES.map(d => LABELS[d]);
+    const bgColors = DEVICES.map(d => COLORS[d]+'CC');
+    const borderColors = DEVICES.map(d => COLORS[d]);
+
+    charts.yoyAppl = new Chart(document.getElementById('chart-yoy-appl'), {
+        type:'bar', data:{ labels, datasets:[{data:yoyAppl, backgroundColor:bgColors, borderColor:borderColors, borderWidth:1, borderRadius:4}]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtPct(ctx.parsed.y)}}},
+            scales:{ y:{ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }}
+    });
+    charts.yoyApp = new Chart(document.getElementById('chart-yoy-app'), {
+        type:'bar', data:{ labels, datasets:[{data:yoyApp, backgroundColor:bgColors, borderColor:borderColors, borderWidth:1, borderRadius:4}]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtPct(ctx.parsed.y)}}},
+            scales:{ y:{ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }}
+    });
+
+    // Drop contribution - horizontal bar
+    const contrib = D[`feb_drop_contrib_${segment}`];
+    const contribVals = DEVICES.map(d => contrib[d].absolute_drop);
+    const contribPct = DEVICES.map(d => contrib[d].pct_of_total_drop);
+    charts.dropContrib = new Chart(document.getElementById('chart-drop-contrib'), {
+        type:'bar', data:{ labels, datasets:[{label:'Drop in daily avg', data:contribVals, backgroundColor:bgColors, borderColor:borderColors, borderWidth:1, borderRadius:4}]},
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${fmt(ctx.parsed.x)} (${contribPct[ctx.dataIndex].toFixed(1)}% of total)`}}},
+            scales:{ x:{grid:{color:'#f0f0f0'}, ticks:{callback:v=>fmt(v)}}, y:{grid:{display:false}} }}
+    });
+
+    // Share doughnut
+    const share25 = D[`feb_share_${segment}`]['2025'];
+    const share26 = D[`feb_share_${segment}`]['2026'];
+    charts.share = new Chart(document.getElementById('chart-share'), {
+        type:'bar', data:{
+            labels,
+            datasets:[
+                {label:'Feb 2025', data:DEVICES.map(d=>share25[d]), backgroundColor:DEVICES.map(d=>COLORS[d]+'88'), borderRadius:4},
+                {label:'Feb 2026', data:DEVICES.map(d=>share26[d]), backgroundColor:DEVICES.map(d=>COLORS[d]), borderRadius:4}
+            ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:15,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%'}}},
+            scales:{ y:{ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }}
+    });
+
+    // Ratio chart
+    const ratio25 = DEVICES.map(d => kpis[d].ratio_25);
+    const ratio26 = DEVICES.map(d => kpis[d].ratio_26);
+    charts.ratio = new Chart(document.getElementById('chart-ratio'), {
+        type:'bar', data:{
+            labels,
+            datasets:[
+                {label:'Feb 2025', data:ratio25, backgroundColor:DEVICES.map(d=>COLORS[d]+'88'), borderRadius:4},
+                {label:'Feb 2026', data:ratio26, backgroundColor:DEVICES.map(d=>COLORS[d]), borderRadius:4}
+            ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:15,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(2)}}},
+            scales:{ y:{grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }}
+    });
+
+    // Insight summary
+    const drops = DEVICES.map(d => ({dev:d, chg:kpis[d].applications_chg, contrib:contrib[d].pct_of_total_drop}));
+    drops.sort((a,b) => a.chg - b.chg);
+    const worst = drops[0];
+    const best = drops[drops.length-1];
+    const totalDrop = contrib.total_drop;
+
+    let insightHtml = `<p><strong>Total daily avg drop:</strong> <span style="color:var(--negative);font-weight:700">${fmt(totalDrop)}</span> applications/day</p>`;
+    insightHtml += `<p style="margin-top:8px"><strong>Biggest drag:</strong> ${LABELS[worst.dev]} at ${fmtPct(worst.chg)} YoY, contributing <strong>${worst.contrib.toFixed(0)}%</strong> of the total decline</p>`;
+    insightHtml += `<p style="margin-top:8px"><strong>Most resilient:</strong> ${LABELS[best.dev]} at ${fmtPct(best.chg)} YoY</p>`;
+
+    // Recovery signal
+    const wom = D[`feb_wom_${segment}`];
+    const webW1 = wom.web.W1.appl_yoy;
+    const webW4 = wom.web.W4.appl_yoy;
+    if (webW4 > webW1) {
+        insightHtml += `<p style="margin-top:8px;color:var(--positive)"><strong>Recovery signal:</strong> Web apps improved from ${fmtPct(webW1)} (W1) to ${fmtPct(webW4)} (W4)</p>`;
+    }
+    const androidW1 = wom.android.W1.appl_yoy;
+    const androidW4 = wom.android.W4.appl_yoy;
+    insightHtml += `<p style="margin-top:8px"><strong>Android trend:</strong> ${fmtPct(androidW1)} (W1) → ${fmtPct(androidW4)} (W4) — ${androidW4 > androidW1 ? 'slight improvement' : 'no recovery'}</p>`;
+
+    document.getElementById('insight-summary').innerHTML = insightHtml;
+}
+
+function renderRecovery() {
+    const wom = D[`feb_wom_${segment}`];
+    const weeks = ['W1','W2','W3','W4'];
+
+    // KPI: W1 vs W4 improvement for each device
+    let html = '';
+    DEVICES.forEach(dev => {
+        const w1 = wom[dev].W1.appl_yoy;
+        const w4 = wom[dev].W4.appl_yoy;
+        const improvement = w4 - w1;
+        html += `<div class="kpi-card ${dev}">
+            <div class="kpi-label">${LABELS[dev]} Recovery</div>
+            <div class="kpi-value" style="font-size:18px">W1: ${fmtPct(w1)}</div>
+            <div class="kpi-change ${chgClass(w4)}">W4: ${fmtPct(w4)}</div>
+            <div class="kpi-sub">Improvement: ${improvement>=0?'+':''}${improvement.toFixed(1)}pp</div>
+        </div>`;
+    });
+    // Total
+    const tw1 = wom.total.W1.appl_yoy;
+    const tw4 = wom.total.W4.appl_yoy;
+    html += `<div class="kpi-card total">
+        <div class="kpi-label">Total Recovery</div>
+        <div class="kpi-value" style="font-size:18px">W1: ${fmtPct(tw1)}</div>
+        <div class="kpi-change ${chgClass(tw4)}">W4: ${fmtPct(tw4)}</div>
+        <div class="kpi-sub">Improvement: ${(tw4-tw1)>=0?'+':''}${(tw4-tw1).toFixed(1)}pp</div>
+    </div>`;
+    document.getElementById('kpi-recovery').innerHTML = html;
+
+    // Grouped bar: YoY% by week for each device
+    const datasets = DEVICES.map(dev => ({
+        label: LABELS[dev],
+        data: weeks.map(w => wom[dev][w].appl_yoy),
+        backgroundColor: COLORS[dev]+'CC',
+        borderColor: COLORS[dev],
+        borderWidth: 1, borderRadius: 4
+    }));
+    charts.womYoy = new Chart(document.getElementById('chart-wom-yoy'), {
+        type:'bar', data:{ labels:weeks, datasets },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtPct(ctx.parsed.y)}}},
+            scales:{ y:{ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }}
+    });
+
+    // Line chart: absolute applications by week in Feb 2026
+    const ds26 = DEVICES.map(dev => ({
+        label: LABELS[dev],
+        data: weeks.map(w => wom[dev][w].appl_26),
+        borderColor: COLORS[dev],
+        backgroundColor: COLORS[dev]+'20',
+        borderWidth: 2, fill:false, tension:0.3, pointRadius:5, pointHoverRadius:7
+    }));
+    charts.womAbs = new Chart(document.getElementById('chart-wom-abs'), {
+        type:'line', data:{ labels:weeks, datasets:ds26 },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmt(ctx.parsed.y)}}},
+            scales:{ y:{grid:{color:'#f0f0f0'}, ticks:{callback:v=>fmt(v)}}, x:{grid:{display:false}} }}
+    });
+
+    // Detailed table
+    let thtml = '<table><thead><tr><th>Device</th><th>Week</th><th class="num">2025 Avg</th><th class="num">2026 Avg</th><th class="num">YoY %</th></tr></thead><tbody>';
+    DEVICES.forEach(dev => {
+        weeks.forEach((w,i) => {
+            const d = wom[dev][w];
+            thtml += `<tr${i===0?' style="border-top:2px solid #dee2e6"':''}>`;
+            if(i===0) thtml += `<td rowspan="4" style="font-weight:600;vertical-align:middle">${LABELS[dev]}</td>`;
+            thtml += `<td>${w}</td><td class="num">${fmt(d.appl_25)}</td><td class="num">${fmt(d.appl_26)}</td>${chgTd(d.appl_yoy)}</tr>`;
+        });
+    });
+    weeks.forEach((w,i) => {
+        const d = wom.total[w];
+        thtml += `<tr style="${i===0?'border-top:3px solid #333;':''}font-weight:600">`;
+        if(i===0) thtml += `<td rowspan="4" style="vertical-align:middle">TOTAL</td>`;
+        thtml += `<td>${w}</td><td class="num">${fmt(d.appl_25)}</td><td class="num">${fmt(d.appl_26)}</td>${chgTd(d.appl_yoy)}</tr>`;
+    });
+    thtml += '</tbody></table>';
+    document.getElementById('table-wom').innerHTML = thtml;
+}
+
+function renderDeviceDeep() {
+    const dow = D[`feb_dow_${segment}`];
+    const dowNames = ['Mon','Tue','Wed','Thu','Fri'];
+
+    // Create 4 DOW charts
+    let dowHtml = '';
+    DEVICES.forEach(dev => {
+        dowHtml += `<div class="chart-box"><h3>${LABELS[dev]} — DOW Pattern</h3><canvas id="chart-dow-${dev}" style="max-height:240px"></canvas></div>`;
+    });
+    document.getElementById('dow-charts').innerHTML = dowHtml;
+
+    DEVICES.forEach(dev => {
+        const d = dow[dev];
+        charts['dow_'+dev] = new Chart(document.getElementById('chart-dow-'+dev), {
+            type:'bar', data:{
+                labels:dowNames,
+                datasets:[
+                    {label:'Feb 2025', data:d['2025'], backgroundColor:COLORS[dev]+'66', borderRadius:4},
+                    {label:'Feb 2026', data:d['2026'], backgroundColor:COLORS[dev], borderRadius:4}
+                ]},
+            options:{ responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:10}}}, tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmt(ctx.parsed.y)}}},
+                scales:{ y:{grid:{color:'#f0f0f0'}, ticks:{callback:v=>fmt(v)}}, x:{grid:{display:false}} }}
+        });
+    });
+
+    // Daily line chart - Feb 2026 all devices + 2025 total as reference
+    const daily = D[`feb_daily_${segment}`];
+    const d26 = daily['2026'].filter(r=>r.dow<5);
+    const d25 = daily['2025'].filter(r=>r.dow<5);
+
+    const ds = DEVICES.map(dev => ({
+        label: LABELS[dev]+' 2026',
+        data: d26.map(r => ({x:r.date.slice(5), y:r[dev]})),
+        borderColor: COLORS[dev],
+        borderWidth: 2, fill:false, tension:0.3, pointRadius:3
+    }));
+    // Add total 2025 as dashed reference
+    ds.push({
+        label: 'Total 2025 (ref)',
+        data: d25.map(r => ({x:r.date.slice(5), y:r.total})),
+        borderColor: '#999', borderDash:[5,5],
+        borderWidth: 1.5, fill:false, tension:0.3, pointRadius:0
+    });
+
+    charts.dailyDevices = new Chart(document.getElementById('chart-daily-devices'), {
+        type:'line', data:{ labels:d26.map(r=>r.date.slice(5)), datasets:ds.map(d=>({...d, data:d.data.map(p=>p.y)})) },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:10}}}},
+            scales:{ y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>fmt(v)}}, x:{grid:{display:false},ticks:{maxTicksLimit:10}} }}
+    });
+
+    // Detail table
+    const kpis = D[`february_${segment}_kpis`];
+    let thtml = `<table><thead><tr>
+        <th>Device</th>
+        <th class="num">Applicants 25</th><th class="num">Applicants 26</th><th class="num">YoY</th>
+        <th class="num">Applications 25</th><th class="num">Applications 26</th><th class="num">YoY</th>
+        <th class="num">Ratio 25</th><th class="num">Ratio 26</th><th class="num">YoY</th>
+    </tr></thead><tbody>`;
+    [...DEVICES, 'total'].forEach(dev => {
+        const d = kpis[dev];
+        const label = dev==='total'?'<strong>TOTAL</strong>':LABELS[dev];
+        const style = dev==='total'?'font-weight:700;border-top:2px solid #333':'';
+        thtml += `<tr style="${style}"><td>${label}</td>
+            <td class="num">${fmt(d.applicants_25)}</td><td class="num">${fmt(d.applicants_26)}</td>${chgTd(d.applicants_chg)}
+            <td class="num">${fmt(d.applications_25)}</td><td class="num">${fmt(d.applications_26)}</td>${chgTd(d.applications_chg)}
+            <td class="num">${d.ratio_25.toFixed(2)}</td><td class="num">${d.ratio_26.toFixed(2)}</td>${chgTd(d.ratio_chg)}
+        </tr>`;
+    });
+    thtml += '</tbody></table>';
+    document.getElementById('table-device-detail').innerHTML = thtml;
+}
+
+function renderMonthly() {
+    const trend = D[`monthly_trend_${segment}`];
+
+    // Stacked area
+    const labels = trend.map(t=>t.ym);
+    const ds = DEVICES.map(dev => ({
+        label: LABELS[dev],
+        data: trend.map(t=>t[dev]),
+        borderColor: COLORS[dev],
+        backgroundColor: COLORS[dev]+'40',
+        borderWidth: 2, fill: true, tension: 0.3, pointRadius: 2
+    }));
+    charts.monthlyStack = new Chart(document.getElementById('chart-monthly-stack'), {
+        type:'line', data:{ labels, datasets:ds },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}}},
+            scales:{ y:{stacked:true, grid:{color:'#f0f0f0'},ticks:{callback:v=>fmt(v)}}, x:{grid:{display:false},ticks:{maxTicksLimit:15}} }}
+    });
+
+    // Share % line
+    const shareDs = DEVICES.map(dev => {
+        const shares = trend.map(t => {
+            const total = DEVICES.reduce((s,d)=>s+t[d],0);
+            return total > 0 ? (t[dev]/total*100) : 0;
+        });
+        return {
+            label: LABELS[dev],
+            data: shares,
+            borderColor: COLORS[dev],
+            borderWidth: 2, fill:false, tension:0.3, pointRadius:2
+        };
+    });
+    charts.monthlyShare = new Chart(document.getElementById('chart-monthly-share'), {
+        type:'line', data:{ labels, datasets:shareDs },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}}},
+            scales:{ y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>v.toFixed(0)+'%'}}, x:{grid:{display:false},ticks:{maxTicksLimit:15}} }}
+    });
+}
+
+// Initialize
+renderAll();
+</script>
+</body>
+</html>

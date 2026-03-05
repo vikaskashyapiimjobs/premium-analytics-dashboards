@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YoY Comparison: Jan & Feb 2025 vs 2026 — Premium Applicants</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg:#f0f2f5; --card:#fff; --hdr:#16213e; --text:#1e293b; --muted:#64748b;
+  --border:#e2e8f0; --gap:16px; --r:10px;
+  --jan25:#3b82f6; --jan26:#1d4ed8;
+  --feb25:#f97316; --feb26:#c2410c;
+  --web:#6366f1; --total:#059669;
+  --pos:#16a34a; --neg:#dc2626; --warn:#d97706;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+.wrap{max-width:1400px;margin:0 auto;padding:var(--gap);}
+
+/* HEADER */
+.hdr{background:var(--hdr);color:#fff;border-radius:var(--r);padding:22px 28px;margin-bottom:var(--gap);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.hdr h1{font-size:18px;font-weight:700;}
+.hdr .sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;}
+.legend-strip{display:flex;gap:12px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.8);}
+.leg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+/* TAB SELECTOR */
+.tab-bar{display:flex;gap:0;margin-bottom:var(--gap);background:#fff;border-radius:var(--r);padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.tab-btn{flex:1;padding:9px 12px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;text-align:center;}
+.tab-btn.active{background:var(--hdr);color:#fff;}
+.tab-btn:hover:not(.active){background:#f1f5f9;}
+
+/* KPI SECTION */
+.kpi-section{margin-bottom:var(--gap);}
+.kpi-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:8px;padding-left:4px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.kpi{background:var(--card);border-radius:var(--r);padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07);border-top:3px solid var(--border);}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px;}
+.kpi-pair{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+.kpi-main{font-size:22px;font-weight:700;line-height:1.1;}
+.kpi-prev{font-size:13px;color:var(--muted);font-weight:400;}
+.kpi-chg{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;}
+.up{background:#dcfce7;color:#15803d;}
+.dn{background:#fee2e2;color:#b91c1c;}
+.flat{background:#f1f5f9;color:#475569;}
+
+/* GRID */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+.row-single{margin-bottom:var(--gap);}
+@media(max-width:900px){.row2,.row3{grid-template-columns:1fr;}}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--r);padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.card h3{font-size:13px;font-weight:700;margin-bottom:2px;}
+.card .csub{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.4;}
+.chart-wrap{position:relative;height:240px;}
+.chart-wrap.md{height:280px;}
+.chart-wrap.sm{height:200px;}
+
+/* INSIGHT BOX */
+.insight-box{background:#f8fafc;border-left:4px solid var(--web);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:var(--gap);}
+.insight-box.orange{border-left-color:var(--feb26);}
+.insight-box.blue{border-left-color:var(--jan26);}
+.insight-title{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--text);}
+.insight-text{font-size:12px;color:#374151;line-height:1.6;}
+
+/* COMPARISON TABLE */
+.yoy-table{width:100%;border-collapse:collapse;font-size:12px;}
+.yoy-table th{padding:9px 10px;border-bottom:2px solid var(--border);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;text-align:right;white-space:nowrap;}
+.yoy-table th:first-child{text-align:left;}
+.yoy-table td{padding:8px 10px;border-bottom:1px solid #f8fafc;text-align:right;white-space:nowrap;}
+.yoy-table td:first-child{text-align:left;font-weight:600;color:var(--text);}
+.yoy-table tr:last-child td{border-bottom:none;}
+.yoy-table tr:hover td{background:#f8fafc;}
+.yoy-table .chg-col{font-weight:700;}
+.yoy-table .section-hdr td{background:#f1f5f9;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:6px 10px;}
+
+/* DOW TABLE */
+.dow-section{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+@media(max-width:900px){.dow-section{grid-template-columns:1fr;}}
+
+/* WEEK CARDS */
+.wom-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+@media(max-width:900px){.wom-row{grid-template-columns:1fr;}}
+.wom-inner{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;}
+.wom-card{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.wom-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:6px;}
+.wom-stat{font-size:12px;margin-bottom:2px;display:flex;justify-content:space-between;}
+.wom-val{font-weight:600;}
+
+/* DAILY CHART CONTAINER */
+.daily-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.dtab{padding:5px 12px;border:1px solid var(--border);border-radius:16px;background:#fff;font-size:11px;cursor:pointer;color:var(--muted);}
+.dtab.active{background:var(--hdr);color:#fff;border-color:var(--hdr);}
+
+/* PILL */
+.pill{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;}
+.pill-up{background:#dcfce7;color:#15803d;}
+.pill-dn{background:#fee2e2;color:#b91c1c;}
+.pill-flat{background:#f1f5f9;color:#475569;}
+
+/* SUMMARY VERDICT */
+.verdict-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+@media(max-width:900px){.verdict-grid{grid-template-columns:1fr;}}
+.verdict-card{border-radius:var(--r);padding:20px 24px;color:#fff;}
+.verdict-card.jan{background:linear-gradient(135deg,#1e3a8a,#2563eb);}
+.verdict-card.feb{background:linear-gradient(135deg,#7c2d12,#ea580c);}
+.verdict-card h2{font-size:16px;font-weight:700;margin-bottom:6px;}
+.verdict-card .verdict-sub{font-size:11px;opacity:.8;margin-bottom:14px;}
+.verdict-items{display:flex;flex-direction:column;gap:6px;}
+.vi{font-size:12px;padding:6px 10px;background:rgba(255,255,255,.12);border-radius:6px;line-height:1.4;}
+.vi strong{font-weight:700;}
+
+.footer{text-align:center;font-size:11px;color:var(--muted);padding:16px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <h1>📅 Year-on-Year Comparison — Premium Applicants</h1>
+    <div class="sub">CTC ≥ 30L &nbsp;·&nbsp; CTC/Exp ≥ 3 &nbsp;·&nbsp; Weekday averages (Mon–Fri) unless noted &nbsp;·&nbsp; iimjobs.com</div>
+  </div>
+  <div class="legend-strip">
+    <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>Jan 2025</div>
+    <div class="leg"><div class="leg-dot" style="background:#1d4ed8"></div>Jan 2026</div>
+    <div class="leg"><div class="leg-dot" style="background:#f97316"></div>Feb 2025</div>
+    <div class="leg"><div class="leg-dot" style="background:#c2410c"></div>Feb 2026</div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showSection('jan',this)">January YoY</button>
+  <button class="tab-btn" onclick="showSection('feb',this)">February YoY</button>
+  <button class="tab-btn" onclick="showSection('both',this)">Side-by-Side</button>
+</div>
+
+<!-- ============ JANUARY SECTION ============ -->
+<div id="sec-jan">
+
+  <div class="verdict-grid">
+    <div class="verdict-card jan">
+      <h2>January: Fewer Users, More Engaged (Web)</h2>
+      <div class="verdict-sub">Jan 2026 vs Jan 2025 · Weekday averages</div>
+      <div class="verdict-items">
+        <div class="vi">📉 <strong>Web applicants fell -13.9%</strong> (931 → 802/day) — biggest volume drop across all metrics</div>
+        <div class="vi">📉 <strong>Total applicants fell -8.9%</strong> (2,896 → 2,637/day) — platform-wide softness</div>
+        <div class="vi">📈 <strong>Web apps/applicant rose +10.6%</strong> (5.11 → 5.65) — web users who did come applied MORE</div>
+        <div class="vi">➡️ <strong>Total apps/applicant flat +0.1%</strong> (4.82 → 4.82) — overall engagement held steady</div>
+        <div class="vi">📉 <strong>Total applications -9.1%</strong> (14,046 → 12,762/day) — purely volume-driven decline</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:var(--gap);">
+      <div class="insight-box blue">
+        <div class="insight-title">🔑 Key Signal: Volume Down, Quality Up (Web)</div>
+        <div class="insight-text">Jan 2026 saw fewer premium users on web desktop, but those who did visit applied to <strong>10.6% more jobs</strong>. This suggests the web channel retained its most engaged users — a potential quality-of-traffic improvement, or a seasonal effect where lower-intent users dropped off in Jan 2026.</div>
+      </div>
+      <div class="insight-box blue">
+        <div class="insight-title">📆 Worst DOW: Thursday (-23% web applicants)</div>
+        <div class="insight-text">Thursday drove the biggest single-day web applicant decline (970 → 745, -23%), yet its ratio improved from 4.99 to 5.70 (+14%). Friday also saw a large ratio jump (4.91 → 5.83, +19%). All 5 weekdays had lower volumes but higher web engagement ratios in Jan 2026.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAN KPIs -->
+  <div class="kpi-section">
+    <div class="kpi-section-title">Key Metrics — Weekday Averages (Jan 2025 vs Jan 2026)</div>
+    <div class="kpi-grid" id="jan-kpis"></div>
+  </div>
+
+  <!-- JAN CHARTS ROW 1 -->
+  <div class="row2">
+    <div class="card">
+      <h3>Daily Web Applicants — Jan 2025 vs Jan 2026</h3>
+      <div class="csub">Weekends excluded. Jan 2026 ran consistently lower throughout the month.</div>
+      <div class="chart-wrap md"><canvas id="jan-daily-web-app"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Daily Total Applications — Jan 2025 vs Jan 2026</h3>
+      <div class="csub">Jan 2026 applications ran below 2025 across all weeks.</div>
+      <div class="chart-wrap md"><canvas id="jan-daily-tot-appl"></canvas></div>
+    </div>
+  </div>
+
+  <!-- JAN CHARTS ROW 2 -->
+  <div class="row2">
+    <div class="card">
+      <h3>Web Applications/Applicant by Day-of-Week</h3>
+      <div class="csub">Jan 2026 shows higher ratios on every weekday — engaged users visited despite lower traffic.</div>
+      <div class="chart-wrap"><canvas id="jan-dow-ratio"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Web Applicants by Day-of-Week</h3>
+      <div class="csub">Thursday and Monday saw the largest absolute declines in Jan 2026.</div>
+      <div class="chart-wrap"><canvas id="jan-dow-app"></canvas></div>
+    </div>
+  </div>
+
+  <!-- JAN WEEK OF MONTH -->
+  <div class="card row-single">
+    <h3>Week-of-Month Comparison — January</h3>
+    <div class="csub">W1 had the largest volume gap. Weeks 3–4 partially recovered but stayed below 2025 levels.</div>
+    <div id="jan-wom"></div>
+  </div>
+
+  <!-- JAN FULL TABLE -->
+  <div class="card row-single">
+    <h3>Full Metric Comparison — January</h3>
+    <div class="csub">All weekday average metrics. YoY change vs Jan 2025.</div>
+    <div style="overflow-x:auto"><table class="yoy-table" id="jan-full-table"></table></div>
+  </div>
+
+</div>
+
+<!-- ============ FEBRUARY SECTION ============ -->
+<div id="sec-feb" style="display:none">
+
+  <div class="verdict-grid">
+    <div class="verdict-card feb">
+      <h2>February: More Applicants, Fewer Applications</h2>
+      <div class="verdict-sub">Feb 2026 vs Feb 2025 · Weekday averages</div>
+      <div class="verdict-items">
+        <div class="vi">➡️ <strong>Web applicants flat -0.1%</strong> (960 → 959/day) — essentially unchanged YoY</div>
+        <div class="vi">📈 <strong>Total applicants +3.9%</strong> (2,969 → 3,084/day) — more premium users overall</div>
+        <div class="vi">📉 <strong>Web applications -8.0%</strong> (5,324 → 4,899/day) — significant drop despite flat visitors</div>
+        <div class="vi">📉 <strong>Total applications -7.8%</strong> (15,228 → 14,037/day) — fewer applies despite more applicants</div>
+        <div class="vi">📉 <strong>Total apps/applicant -11.4%</strong> (5.13 → 4.55) — sharpest engagement decline</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:var(--gap);">
+      <div class="insight-box orange">
+        <div class="insight-title">🔑 Key Signal: Engagement Depth Declined Structurally</div>
+        <div class="insight-text">Feb 2026 had virtually the same number of web applicants as Feb 2025, yet each applicant submitted <strong>8% fewer web applications</strong> and <strong>11.4% fewer total applications</strong>. This is not a traffic problem — premium users are visiting but applying to fewer jobs per visit.</div>
+      </div>
+      <div class="insight-box orange">
+        <div class="insight-title">📆 Worst DOW: Monday & Thursday</div>
+        <div class="insight-text">Monday web applications fell -12.7% (6,540 → 5,709) despite +1.8% more applicants, crushing the Monday ratio (6.29 → 5.35, -15%). Thursday web applications fell -15.2% (5,347 → 4,534). Wednesday was the only day with a positive applications trend (+1.9%).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEB KPIs -->
+  <div class="kpi-section">
+    <div class="kpi-section-title">Key Metrics — Weekday Averages (Feb 2025 vs Feb 2026)</div>
+    <div class="kpi-grid" id="feb-kpis"></div>
+  </div>
+
+  <!-- FEB CHARTS ROW 1 -->
+  <div class="row2">
+    <div class="card">
+      <h3>Daily Web Applicants — Feb 2025 vs Feb 2026</h3>
+      <div class="csub">Near-identical weekly cycles — same number of users visiting each week.</div>
+      <div class="chart-wrap md"><canvas id="feb-daily-web-app"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Daily Total Applications — Feb 2025 vs Feb 2026</h3>
+      <div class="csub">Applications gap is visible from week 1 and persists throughout the month.</div>
+      <div class="chart-wrap md"><canvas id="feb-daily-tot-appl"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FEB CHARTS ROW 2 -->
+  <div class="row2">
+    <div class="card">
+      <h3>Web Applications/Applicant by Day-of-Week</h3>
+      <div class="csub">Monday fell hardest (-15%). Wednesday is the only bright spot (+3.6%). Thursday -14.4%.</div>
+      <div class="chart-wrap"><canvas id="feb-dow-ratio"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Total Applications by Day-of-Week</h3>
+      <div class="csub">Applications fell on every weekday except Wednesday. Monday and Thursday most impacted.</div>
+      <div class="chart-wrap"><canvas id="feb-dow-app"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FEB WEEK OF MONTH -->
+  <div class="card row-single">
+    <h3>Week-of-Month Comparison — February</h3>
+    <div class="csub">All four weeks show lower engagement (apps/applicant). W1 and W2 had the sharpest ratio drops.</div>
+    <div id="feb-wom"></div>
+  </div>
+
+  <!-- FEB FULL TABLE -->
+  <div class="card row-single">
+    <h3>Full Metric Comparison — February</h3>
+    <div class="csub">All weekday average metrics. YoY change vs Feb 2025.</div>
+    <div style="overflow-x:auto"><table class="yoy-table" id="feb-full-table"></table></div>
+  </div>
+
+</div>
+
+<!-- ============ SIDE-BY-SIDE SECTION ============ -->
+<div id="sec-both" style="display:none">
+
+  <!-- COMBINED KPI TABLE -->
+  <div class="card row-single">
+    <h3>Full YoY Summary — Both Months</h3>
+    <div class="csub">Weekday averages. Green = improvement, Red = decline vs prior year.</div>
+    <div style="overflow-x:auto"><table class="yoy-table" id="both-table"></table></div>
+  </div>
+
+  <!-- SIDE BY SIDE CHARTS -->
+  <div class="row2">
+    <div class="card">
+      <h3>Web Applications/Applicant — All 4 Periods</h3>
+      <div class="csub">Jan 2026 web ratio improved (+10.6%). Feb 2026 ratio declined (-8%). Contrasting trends.</div>
+      <div class="chart-wrap md"><canvas id="both-ratio-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Total Applications/Applicant — All 4 Periods</h3>
+      <div class="csub">Total engagement flat in Jan, but fell sharply in Feb 2026 (-11.4% YoY).</div>
+      <div class="chart-wrap md"><canvas id="both-tot-ratio-bar"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <h3>Web Applicants per Day — All 4 Periods by DOW</h3>
+      <div class="csub">Jan 2026 down across all days. Feb 2026 aligns closely with Feb 2025.</div>
+      <div class="chart-wrap md"><canvas id="both-dow-app"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Web Applications per Day — All 4 Periods by DOW</h3>
+      <div class="csub">Feb 2026 applications notably below Feb 2025 on Monday & Thursday.</div>
+      <div class="chart-wrap md"><canvas id="both-dow-appl"></canvas></div>
+    </div>
+  </div>
+
+  <!-- WEEKEND COMPARISON -->
+  <div class="card row-single">
+    <h3>Weekend Activity Comparison</h3>
+    <div class="csub">Weekend applicants show different trends — Jan 2026 weekends nearly flat; Feb 2026 weekends slightly higher in applicants but lower in applications.</div>
+    <div style="overflow-x:auto"><table class="yoy-table" id="wknd-table"></table></div>
+  </div>
+
+</div>
+
+<div class="footer">Premium Applicants (CTC ≥ 30L, CTC/Exp ≥ 3) · YoY Analysis · iimjobs.com · As of March 5, 2026</div>
+</div>
+
+<script>
+// ======= DATA =======
+const D = {"jan25_daily": [{"date_str": "2025-01-01", "day_num": 1, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 460.0, "web_applications": 1938.0, "total_applicants": 1674, "total_applications": 5979, "web_per_appl": 4.21, "tot_per_appl": 3.57, "web_share_appl": 0.27}, {"date_str": "2025-01-02", "day_num": 2, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 889.0, "web_applications": 4225.0, "total_applicants": 2734, "total_applications": 12320, "web_per_appl": 4.75, "tot_per_appl": 4.51, "web_share_appl": 0.33}, {"date_str": "2025-01-03", "day_num": 3, "dow_name": "Friday", "is_weekend": false, "web_applicants": 760.0, "web_applications": 4128.0, "total_applicants": 2508, "total_applications": 12068, "web_per_appl": 5.43, "tot_per_appl": 4.81, "web_share_appl": 0.3}, {"date_str": "2025-01-04", "day_num": 4, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 435.0, "web_applications": 2258.0, "total_applicants": 1713, "total_applications": 7496, "web_per_appl": 5.19, "tot_per_appl": 4.38, "web_share_appl": 0.25}, {"date_str": "2025-01-05", "day_num": 5, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 487.0, "web_applications": 2509.0, "total_applicants": 1728, "total_applications": 7191, "web_per_appl": 5.15, "tot_per_appl": 4.16, "web_share_appl": 0.28}, {"date_str": "2025-01-06", "day_num": 6, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1015.0, "web_applications": 5422.0, "total_applicants": 2895, "total_applications": 14116, "web_per_appl": 5.34, "tot_per_appl": 4.88, "web_share_appl": 0.35}, {"date_str": "2025-01-07", "day_num": 7, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 1017.0, "web_applications": 5425.0, "total_applicants": 3000, "total_applications": 15510, "web_per_appl": 5.33, "tot_per_appl": 5.17, "web_share_appl": 0.34}, {"date_str": "2025-01-08", "day_num": 8, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1032.0, "web_applications": 5822.0, "total_applicants": 3161, "total_applications": 15814, "web_per_appl": 5.64, "tot_per_appl": 5.0, "web_share_appl": 0.33}, {"date_str": "2025-01-09", "day_num": 9, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 1015.0, "web_applications": 5328.0, "total_applicants": 3176, "total_applications": 16245, "web_per_appl": 5.25, "tot_per_appl": 5.11, "web_share_appl": 0.32}, {"date_str": "2025-01-10", "day_num": 10, "dow_name": "Friday", "is_weekend": false, "web_applicants": 859.0, "web_applications": 3918.0, "total_applicants": 2787, "total_applications": 12103, "web_per_appl": 4.56, "tot_per_appl": 4.34, "web_share_appl": 0.31}, {"date_str": "2025-01-11", "day_num": 11, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 468.0, "web_applications": 2782.0, "total_applicants": 1801, "total_applications": 8051, "web_per_appl": 5.94, "tot_per_appl": 4.47, "web_share_appl": 0.26}, {"date_str": "2025-01-12", "day_num": 12, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 511.0, "web_applications": 2665.0, "total_applicants": 1783, "total_applications": 7831, "web_per_appl": 5.22, "tot_per_appl": 4.39, "web_share_appl": 0.29}, {"date_str": "2025-01-13", "day_num": 13, "dow_name": "Monday", "is_weekend": false, "web_applicants": 960.0, "web_applications": 4697.0, "total_applicants": 2873, "total_applications": 13427, "web_per_appl": 4.89, "tot_per_appl": 4.67, "web_share_appl": 0.33}, {"date_str": "2025-01-14", "day_num": 14, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 890.0, "web_applications": 5009.0, "total_applicants": 2792, "total_applications": 13976, "web_per_appl": 5.63, "tot_per_appl": 5.01, "web_share_appl": 0.32}, {"date_str": "2025-01-15", "day_num": 15, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 989.0, "web_applications": 5314.0, "total_applicants": 3037, "total_applications": 15754, "web_per_appl": 5.37, "tot_per_appl": 5.19, "web_share_appl": 0.33}, {"date_str": "2025-01-16", "day_num": 16, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 976.0, "web_applications": 5028.0, "total_applicants": 3010, "total_applications": 14700, "web_per_appl": 5.15, "tot_per_appl": 4.88, "web_share_appl": 0.32}, {"date_str": "2025-01-17", "day_num": 17, "dow_name": "Friday", "is_weekend": false, "web_applicants": 823.0, "web_applications": 3882.0, "total_applicants": 2711, "total_applications": 12000, "web_per_appl": 4.72, "tot_per_appl": 4.43, "web_share_appl": 0.3}, {"date_str": "2025-01-18", "day_num": 18, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 422.0, "web_applications": 2443.0, "total_applicants": 1744, "total_applications": 7857, "web_per_appl": 5.79, "tot_per_appl": 4.51, "web_share_appl": 0.24}, {"date_str": "2025-01-19", "day_num": 19, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 446.0, "web_applications": 2734.0, "total_applicants": 1713, "total_applications": 8065, "web_per_appl": 6.13, "tot_per_appl": 4.71, "web_share_appl": 0.26}, {"date_str": "2025-01-20", "day_num": 20, "dow_name": "Monday", "is_weekend": false, "web_applicants": 996.0, "web_applications": 5058.0, "total_applicants": 2961, "total_applications": 13894, "web_per_appl": 5.08, "tot_per_appl": 4.69, "web_share_appl": 0.34}, {"date_str": "2025-01-21", "day_num": 21, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 990.0, "web_applications": 4728.0, "total_applicants": 2979, "total_applications": 14192, "web_per_appl": 4.78, "tot_per_appl": 4.76, "web_share_appl": 0.33}, {"date_str": "2025-01-22", "day_num": 22, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1016.0, "web_applications": 5363.0, "total_applicants": 3089, "total_applications": 15125, "web_per_appl": 5.28, "tot_per_appl": 4.9, "web_share_appl": 0.33}, {"date_str": "2025-01-23", "day_num": 23, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 943.0, "web_applications": 4499.0, "total_applicants": 3029, "total_applications": 13810, "web_per_appl": 4.77, "tot_per_appl": 4.56, "web_share_appl": 0.31}, {"date_str": "2025-01-24", "day_num": 24, "dow_name": "Friday", "is_weekend": false, "web_applicants": 797.0, "web_applications": 4083.0, "total_applicants": 2685, "total_applications": 12251, "web_per_appl": 5.12, "tot_per_appl": 4.56, "web_share_appl": 0.3}, {"date_str": "2025-01-25", "day_num": 25, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 299.0, "web_applications": 1847.0, "total_applicants": 1617, "total_applications": 7703, "web_per_appl": 6.18, "tot_per_appl": 4.76, "web_share_appl": 0.18}, {"date_str": "2025-01-26", "day_num": 26, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 326.0, "web_applications": 2048.0, "total_applicants": 1500, "total_applications": 6603, "web_per_appl": 6.28, "tot_per_appl": 4.4, "web_share_appl": 0.22}, {"date_str": "2025-01-27", "day_num": 27, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1086.0, "web_applications": 6287.0, "total_applicants": 3173, "total_applications": 16143, "web_per_appl": 5.79, "tot_per_appl": 5.09, "web_share_appl": 0.34}, {"date_str": "2025-01-28", "day_num": 28, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 984.0, "web_applications": 5637.0, "total_applicants": 2980, "total_applications": 15551, "web_per_appl": 5.73, "tot_per_appl": 5.22, "web_share_appl": 0.33}, {"date_str": "2025-01-29", "day_num": 29, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1072.0, "web_applications": 5306.0, "total_applicants": 3327, "total_applications": 17593, "web_per_appl": 4.95, "tot_per_appl": 5.29, "web_share_appl": 0.32}, {"date_str": "2025-01-30", "day_num": 30, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 1025.0, "web_applications": 5156.0, "total_applicants": 3202, "total_applications": 16674, "web_per_appl": 5.03, "tot_per_appl": 5.21, "web_share_appl": 0.32}, {"date_str": "2025-01-31", "day_num": 31, "dow_name": "Friday", "is_weekend": false, "web_applicants": 808.0, "web_applications": 3806.0, "total_applicants": 2814, "total_applications": 13801, "web_per_appl": 4.71, "tot_per_appl": 4.9, "web_share_appl": 0.29}], "jan26_daily": [{"date_str": "2026-01-01", "day_num": 1, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 308.0, "web_applications": 1595.0, "total_applicants": 1343, "total_applications": 5588, "web_per_appl": 5.18, "tot_per_appl": 4.16, "web_share_appl": 0.23}, {"date_str": "2026-01-02", "day_num": 2, "dow_name": "Friday", "is_weekend": false, "web_applicants": 623.0, "web_applications": 3521.0, "total_applicants": 2149, "total_applications": 10829, "web_per_appl": 5.65, "tot_per_appl": 5.04, "web_share_appl": 0.29}, {"date_str": "2026-01-03", "day_num": 3, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 370.0, "web_applications": 1915.0, "total_applicants": 1616, "total_applications": 6867, "web_per_appl": 5.18, "tot_per_appl": 4.25, "web_share_appl": 0.23}, {"date_str": "2026-01-04", "day_num": 4, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 410.0, "web_applications": 2820.0, "total_applicants": 1550, "total_applications": 7409, "web_per_appl": 6.88, "tot_per_appl": 4.78, "web_share_appl": 0.26}, {"date_str": "2026-01-05", "day_num": 5, "dow_name": "Monday", "is_weekend": false, "web_applicants": 943.0, "web_applications": 5342.0, "total_applicants": 2848, "total_applications": 14206, "web_per_appl": 5.66, "tot_per_appl": 4.99, "web_share_appl": 0.33}, {"date_str": "2026-01-06", "day_num": 6, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 871.0, "web_applications": 5089.0, "total_applicants": 2797, "total_applications": 14462, "web_per_appl": 5.84, "tot_per_appl": 5.17, "web_share_appl": 0.31}, {"date_str": "2026-01-07", "day_num": 7, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 841.0, "web_applications": 4822.0, "total_applicants": 2724, "total_applications": 14099, "web_per_appl": 5.73, "tot_per_appl": 5.18, "web_share_appl": 0.31}, {"date_str": "2026-01-08", "day_num": 8, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 818.0, "web_applications": 4325.0, "total_applicants": 2675, "total_applications": 13713, "web_per_appl": 5.29, "tot_per_appl": 5.13, "web_share_appl": 0.31}, {"date_str": "2026-01-09", "day_num": 9, "dow_name": "Friday", "is_weekend": false, "web_applicants": 757.0, "web_applications": 4428.0, "total_applicants": 2596, "total_applications": 12326, "web_per_appl": 5.85, "tot_per_appl": 4.75, "web_share_appl": 0.29}, {"date_str": "2026-01-10", "day_num": 10, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 388.0, "web_applications": 2247.0, "total_applicants": 1649, "total_applications": 7720, "web_per_appl": 5.79, "tot_per_appl": 4.68, "web_share_appl": 0.24}, {"date_str": "2026-01-11", "day_num": 11, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 444.0, "web_applications": 2819.0, "total_applicants": 1658, "total_applications": 7691, "web_per_appl": 6.35, "tot_per_appl": 4.64, "web_share_appl": 0.27}, {"date_str": "2026-01-12", "day_num": 12, "dow_name": "Monday", "is_weekend": false, "web_applicants": 918.0, "web_applications": 5389.0, "total_applicants": 2907, "total_applications": 14864, "web_per_appl": 5.87, "tot_per_appl": 5.11, "web_share_appl": 0.32}, {"date_str": "2026-01-13", "day_num": 13, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 784.0, "web_applications": 4836.0, "total_applicants": 2738, "total_applications": 14316, "web_per_appl": 6.17, "tot_per_appl": 5.23, "web_share_appl": 0.29}, {"date_str": "2026-01-14", "day_num": 14, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 756.0, "web_applications": 3731.0, "total_applicants": 2561, "total_applications": 12029, "web_per_appl": 4.94, "tot_per_appl": 4.7, "web_share_appl": 0.3}, {"date_str": "2026-01-15", "day_num": 15, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 771.0, "web_applications": 5173.0, "total_applicants": 2511, "total_applications": 12772, "web_per_appl": 6.71, "tot_per_appl": 5.09, "web_share_appl": 0.31}, {"date_str": "2026-01-16", "day_num": 16, "dow_name": "Friday", "is_weekend": false, "web_applicants": 809.0, "web_applications": 4842.0, "total_applicants": 2623, "total_applications": 12705, "web_per_appl": 5.99, "tot_per_appl": 4.84, "web_share_appl": 0.31}, {"date_str": "2026-01-17", "day_num": 17, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 455.0, "web_applications": 3201.0, "total_applicants": 1862, "total_applications": 9060, "web_per_appl": 7.04, "tot_per_appl": 4.87, "web_share_appl": 0.24}, {"date_str": "2026-01-18", "day_num": 18, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 507.0, "web_applications": 3040.0, "total_applicants": 1840, "total_applications": 8310, "web_per_appl": 6.0, "tot_per_appl": 4.52, "web_share_appl": 0.28}, {"date_str": "2026-01-19", "day_num": 19, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1024.0, "web_applications": 5282.0, "total_applicants": 3087, "total_applications": 14867, "web_per_appl": 5.16, "tot_per_appl": 4.82, "web_share_appl": 0.33}, {"date_str": "2026-01-20", "day_num": 20, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 871.0, "web_applications": 5103.0, "total_applicants": 3035, "total_applications": 14483, "web_per_appl": 5.86, "tot_per_appl": 4.77, "web_share_appl": 0.29}, {"date_str": "2026-01-21", "day_num": 21, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 956.0, "web_applications": 4784.0, "total_applicants": 3061, "total_applications": 13896, "web_per_appl": 5.0, "tot_per_appl": 4.54, "web_share_appl": 0.31}, {"date_str": "2026-01-22", "day_num": 22, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 835.0, "web_applications": 4537.0, "total_applicants": 2824, "total_applications": 12899, "web_per_appl": 5.43, "tot_per_appl": 4.57, "web_share_appl": 0.3}, {"date_str": "2026-01-23", "day_num": 23, "dow_name": "Friday", "is_weekend": false, "web_applicants": 729.0, "web_applications": 4234.0, "total_applicants": 2459, "total_applications": 10770, "web_per_appl": 5.81, "tot_per_appl": 4.38, "web_share_appl": 0.3}, {"date_str": "2026-01-24", "day_num": 24, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 441.0, "web_applications": 2861.0, "total_applicants": 1769, "total_applications": 8187, "web_per_appl": 6.49, "tot_per_appl": 4.63, "web_share_appl": 0.25}, {"date_str": "2026-01-25", "day_num": 25, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 376.0, "web_applications": 1796.0, "total_applicants": 1567, "total_applications": 6444, "web_per_appl": 4.78, "tot_per_appl": 4.11, "web_share_appl": 0.24}, {"date_str": "2026-01-26", "day_num": 26, "dow_name": "Monday", "is_weekend": false, "web_applicants": 470.0, "web_applications": 2637.0, "total_applicants": 1688, "total_applications": 7520, "web_per_appl": 5.61, "tot_per_appl": 4.45, "web_share_appl": 0.28}, {"date_str": "2026-01-27", "day_num": 27, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 898.0, "web_applications": 5039.0, "total_applicants": 2850, "total_applications": 13552, "web_per_appl": 5.61, "tot_per_appl": 4.76, "web_share_appl": 0.32}, {"date_str": "2026-01-28", "day_num": 28, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 923.0, "web_applications": 4797.0, "total_applicants": 2936, "total_applications": 14244, "web_per_appl": 5.2, "tot_per_appl": 4.85, "web_share_appl": 0.31}, {"date_str": "2026-01-29", "day_num": 29, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 991.0, "web_applications": 5851.0, "total_applicants": 3039, "total_applications": 14521, "web_per_appl": 5.9, "tot_per_appl": 4.78, "web_share_appl": 0.33}, {"date_str": "2026-01-30", "day_num": 30, "dow_name": "Friday", "is_weekend": false, "web_applicants": 737.0, "web_applications": 4328.0, "total_applicants": 2563, "total_applications": 12097, "web_per_appl": 5.87, "tot_per_appl": 4.72, "web_share_appl": 0.29}, {"date_str": "2026-01-31", "day_num": 31, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 472.0, "web_applications": 2735.0, "total_applicants": 1917, "total_applications": 8242, "web_per_appl": 5.79, "tot_per_appl": 4.3, "web_share_appl": 0.25}], "feb25_daily": [{"date_str": "2025-02-01", "day_num": 1, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 467.0, "web_applications": 2790.0, "total_applicants": 1700, "total_applications": 8535, "web_per_appl": 5.97, "tot_per_appl": 5.02, "web_share_appl": 0.27}, {"date_str": "2025-02-02", "day_num": 2, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 494.0, "web_applications": 3142.0, "total_applicants": 1726, "total_applications": 8221, "web_per_appl": 6.36, "tot_per_appl": 4.76, "web_share_appl": 0.29}, {"date_str": "2025-02-03", "day_num": 3, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1120.0, "web_applications": 5868.0, "total_applicants": 3203, "total_applications": 15232, "web_per_appl": 5.24, "tot_per_appl": 4.76, "web_share_appl": 0.35}, {"date_str": "2025-02-04", "day_num": 4, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 972.0, "web_applications": 5528.0, "total_applicants": 3145, "total_applications": 15863, "web_per_appl": 5.69, "tot_per_appl": 5.04, "web_share_appl": 0.31}, {"date_str": "2025-02-05", "day_num": 5, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1041.0, "web_applications": 5011.0, "total_applicants": 3091, "total_applications": 14642, "web_per_appl": 4.81, "tot_per_appl": 4.74, "web_share_appl": 0.34}, {"date_str": "2025-02-06", "day_num": 6, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 1009.0, "web_applications": 6016.0, "total_applicants": 3069, "total_applications": 15939, "web_per_appl": 5.96, "tot_per_appl": 5.19, "web_share_appl": 0.33}, {"date_str": "2025-02-07", "day_num": 7, "dow_name": "Friday", "is_weekend": false, "web_applicants": 814.0, "web_applications": 6020.0, "total_applicants": 2678, "total_applications": 15082, "web_per_appl": 7.4, "tot_per_appl": 5.63, "web_share_appl": 0.3}, {"date_str": "2025-02-08", "day_num": 8, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 482.0, "web_applications": 3025.0, "total_applicants": 1810, "total_applications": 8271, "web_per_appl": 6.28, "tot_per_appl": 4.57, "web_share_appl": 0.27}, {"date_str": "2025-02-09", "day_num": 9, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 523.0, "web_applications": 6795.0, "total_applicants": 1838, "total_applications": 13061, "web_per_appl": 12.99, "tot_per_appl": 7.11, "web_share_appl": 0.28}, {"date_str": "2025-02-10", "day_num": 10, "dow_name": "Monday", "is_weekend": false, "web_applicants": 998.0, "web_applications": 8582.0, "total_applicants": 2896, "total_applications": 18336, "web_per_appl": 8.6, "tot_per_appl": 6.33, "web_share_appl": 0.34}, {"date_str": "2025-02-11", "day_num": 11, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 1056.0, "web_applications": 5208.0, "total_applicants": 3229, "total_applications": 16570, "web_per_appl": 4.93, "tot_per_appl": 5.13, "web_share_appl": 0.33}, {"date_str": "2025-02-12", "day_num": 12, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1001.0, "web_applications": 5491.0, "total_applicants": 3050, "total_applications": 15689, "web_per_appl": 5.49, "tot_per_appl": 5.14, "web_share_appl": 0.33}, {"date_str": "2025-02-13", "day_num": 13, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 996.0, "web_applications": 5066.0, "total_applicants": 2978, "total_applications": 15199, "web_per_appl": 5.09, "tot_per_appl": 5.1, "web_share_appl": 0.33}, {"date_str": "2025-02-14", "day_num": 14, "dow_name": "Friday", "is_weekend": false, "web_applicants": 774.0, "web_applications": 3522.0, "total_applicants": 2612, "total_applications": 11886, "web_per_appl": 4.55, "tot_per_appl": 4.55, "web_share_appl": 0.3}, {"date_str": "2025-02-15", "day_num": 15, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 526.0, "web_applications": 2623.0, "total_applicants": 1920, "total_applications": 8733, "web_per_appl": 4.99, "tot_per_appl": 4.55, "web_share_appl": 0.27}, {"date_str": "2025-02-16", "day_num": 16, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 546.0, "web_applications": 3153.0, "total_applicants": 1876, "total_applications": 8991, "web_per_appl": 5.77, "tot_per_appl": 4.79, "web_share_appl": 0.29}, {"date_str": "2025-02-17", "day_num": 17, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1062.0, "web_applications": 5722.0, "total_applicants": 3136, "total_applications": 15585, "web_per_appl": 5.39, "tot_per_appl": 4.97, "web_share_appl": 0.34}, {"date_str": "2025-02-18", "day_num": 18, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 1065.0, "web_applications": 6009.0, "total_applicants": 3285, "total_applications": 17562, "web_per_appl": 5.64, "tot_per_appl": 5.35, "web_share_appl": 0.32}, {"date_str": "2025-02-19", "day_num": 19, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 994.0, "web_applications": 4582.0, "total_applicants": 3098, "total_applications": 14902, "web_per_appl": 4.61, "tot_per_appl": 4.81, "web_share_appl": 0.32}, {"date_str": "2025-02-20", "day_num": 20, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 970.0, "web_applications": 5229.0, "total_applicants": 3037, "total_applications": 15300, "web_per_appl": 5.39, "tot_per_appl": 5.04, "web_share_appl": 0.32}, {"date_str": "2025-02-21", "day_num": 21, "dow_name": "Friday", "is_weekend": false, "web_applicants": 781.0, "web_applications": 3765.0, "total_applicants": 2665, "total_applications": 12727, "web_per_appl": 4.82, "tot_per_appl": 4.78, "web_share_appl": 0.29}, {"date_str": "2025-02-22", "day_num": 22, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 483.0, "web_applications": 2492.0, "total_applicants": 1802, "total_applications": 7803, "web_per_appl": 5.16, "tot_per_appl": 4.33, "web_share_appl": 0.27}, {"date_str": "2025-02-23", "day_num": 23, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 470.0, "web_applications": 2299.0, "total_applicants": 1623, "total_applications": 7198, "web_per_appl": 4.89, "tot_per_appl": 4.43, "web_share_appl": 0.29}, {"date_str": "2025-02-24", "day_num": 24, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1008.0, "web_applications": 5990.0, "total_applicants": 3037, "total_applications": 16525, "web_per_appl": 5.94, "tot_per_appl": 5.44, "web_share_appl": 0.33}, {"date_str": "2025-02-25", "day_num": 25, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 856.0, "web_applications": 4790.0, "total_applicants": 2748, "total_applications": 15383, "web_per_appl": 5.6, "tot_per_appl": 5.6, "web_share_appl": 0.31}, {"date_str": "2025-02-26", "day_num": 26, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 875.0, "web_applications": 4442.0, "total_applicants": 2757, "total_applications": 13851, "web_per_appl": 5.08, "tot_per_appl": 5.02, "web_share_appl": 0.32}, {"date_str": "2025-02-27", "day_num": 27, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 923.0, "web_applications": 5077.0, "total_applicants": 2879, "total_applications": 15221, "web_per_appl": 5.5, "tot_per_appl": 5.29, "web_share_appl": 0.32}, {"date_str": "2025-02-28", "day_num": 28, "dow_name": "Friday", "is_weekend": false, "web_applicants": 884.0, "web_applications": 4567.0, "total_applicants": 2779, "total_applications": 13058, "web_per_appl": 5.17, "tot_per_appl": 4.7, "web_share_appl": 0.32}], "feb26_daily": [{"date_str": "2026-02-01", "day_num": 1, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 487.0, "web_applications": 2451.0, "total_applicants": 1684, "total_applications": 7353, "web_per_appl": 5.03, "tot_per_appl": 4.37, "web_share_appl": 0.29}, {"date_str": "2026-02-02", "day_num": 2, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1025.0, "web_applications": 5368.0, "total_applicants": 3093, "total_applications": 15298, "web_per_appl": 5.24, "tot_per_appl": 4.95, "web_share_appl": 0.33}, {"date_str": "2026-02-03", "day_num": 3, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 988.0, "web_applications": 4607.0, "total_applicants": 3156, "total_applications": 14489, "web_per_appl": 4.66, "tot_per_appl": 4.59, "web_share_appl": 0.31}, {"date_str": "2026-02-04", "day_num": 4, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 931.0, "web_applications": 4850.0, "total_applicants": 3100, "total_applications": 14385, "web_per_appl": 5.21, "tot_per_appl": 4.64, "web_share_appl": 0.3}, {"date_str": "2026-02-05", "day_num": 5, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 984.0, "web_applications": 4661.0, "total_applicants": 3114, "total_applications": 13015, "web_per_appl": 4.74, "tot_per_appl": 4.18, "web_share_appl": 0.32}, {"date_str": "2026-02-06", "day_num": 6, "dow_name": "Friday", "is_weekend": false, "web_applicants": 751.0, "web_applications": 3819.0, "total_applicants": 2582, "total_applications": 11154, "web_per_appl": 5.09, "tot_per_appl": 4.32, "web_share_appl": 0.29}, {"date_str": "2026-02-07", "day_num": 7, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 396.0, "web_applications": 2040.0, "total_applicants": 1755, "total_applications": 7302, "web_per_appl": 5.15, "tot_per_appl": 4.16, "web_share_appl": 0.23}, {"date_str": "2026-02-08", "day_num": 8, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 467.0, "web_applications": 2524.0, "total_applicants": 1741, "total_applications": 7787, "web_per_appl": 5.4, "tot_per_appl": 4.47, "web_share_appl": 0.27}, {"date_str": "2026-02-09", "day_num": 9, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1015.0, "web_applications": 5484.0, "total_applicants": 3181, "total_applications": 14733, "web_per_appl": 5.4, "tot_per_appl": 4.63, "web_share_appl": 0.32}, {"date_str": "2026-02-10", "day_num": 10, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 911.0, "web_applications": 4836.0, "total_applicants": 2916, "total_applications": 13547, "web_per_appl": 5.31, "tot_per_appl": 4.65, "web_share_appl": 0.31}, {"date_str": "2026-02-11", "day_num": 11, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 946.0, "web_applications": 5359.0, "total_applicants": 3167, "total_applications": 15325, "web_per_appl": 5.66, "tot_per_appl": 4.84, "web_share_appl": 0.3}, {"date_str": "2026-02-12", "day_num": 12, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 911.0, "web_applications": 4033.0, "total_applicants": 3059, "total_applications": 13155, "web_per_appl": 4.43, "tot_per_appl": 4.3, "web_share_appl": 0.3}, {"date_str": "2026-02-13", "day_num": 13, "dow_name": "Friday", "is_weekend": false, "web_applicants": 752.0, "web_applications": 3547.0, "total_applicants": 2535, "total_applications": 11063, "web_per_appl": 4.72, "tot_per_appl": 4.36, "web_share_appl": 0.3}, {"date_str": "2026-02-14", "day_num": 14, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 398.0, "web_applications": 2286.0, "total_applicants": 1739, "total_applications": 7316, "web_per_appl": 5.74, "tot_per_appl": 4.21, "web_share_appl": 0.23}, {"date_str": "2026-02-15", "day_num": 15, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 484.0, "web_applications": 2739.0, "total_applicants": 1896, "total_applications": 8566, "web_per_appl": 5.66, "tot_per_appl": 4.52, "web_share_appl": 0.26}, {"date_str": "2026-02-16", "day_num": 16, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1058.0, "web_applications": 5737.0, "total_applicants": 3241, "total_applications": 15326, "web_per_appl": 5.42, "tot_per_appl": 4.73, "web_share_appl": 0.33}, {"date_str": "2026-02-17", "day_num": 17, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 1038.0, "web_applications": 6113.0, "total_applicants": 3227, "total_applications": 15981, "web_per_appl": 5.89, "tot_per_appl": 4.95, "web_share_appl": 0.32}, {"date_str": "2026-02-18", "day_num": 18, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 955.0, "web_applications": 4596.0, "total_applicants": 3263, "total_applications": 13969, "web_per_appl": 4.81, "tot_per_appl": 4.28, "web_share_appl": 0.29}, {"date_str": "2026-02-19", "day_num": 19, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 960.0, "web_applications": 4667.0, "total_applicants": 3127, "total_applications": 13885, "web_per_appl": 4.86, "tot_per_appl": 4.44, "web_share_appl": 0.31}, {"date_str": "2026-02-20", "day_num": 20, "dow_name": "Friday", "is_weekend": false, "web_applicants": 830.0, "web_applications": 4596.0, "total_applicants": 2861, "total_applications": 13032, "web_per_appl": 5.54, "tot_per_appl": 4.56, "web_share_appl": 0.29}, {"date_str": "2026-02-21", "day_num": 21, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 495.0, "web_applications": 2598.0, "total_applicants": 1984, "total_applications": 8022, "web_per_appl": 5.25, "tot_per_appl": 4.04, "web_share_appl": 0.25}, {"date_str": "2026-02-22", "day_num": 22, "dow_name": "Sunday", "is_weekend": true, "web_applicants": 592.0, "web_applications": 3093.0, "total_applicants": 2062, "total_applications": 9042, "web_per_appl": 5.22, "tot_per_appl": 4.39, "web_share_appl": 0.29}, {"date_str": "2026-02-23", "day_num": 23, "dow_name": "Monday", "is_weekend": false, "web_applicants": 1168.0, "web_applications": 6247.0, "total_applicants": 3468, "total_applications": 16330, "web_per_appl": 5.35, "tot_per_appl": 4.71, "web_share_appl": 0.34}, {"date_str": "2026-02-24", "day_num": 24, "dow_name": "Tuesday", "is_weekend": false, "web_applicants": 1060.0, "web_applications": 5276.0, "total_applicants": 3316, "total_applications": 15276, "web_per_appl": 4.98, "tot_per_appl": 4.61, "web_share_appl": 0.32}, {"date_str": "2026-02-25", "day_num": 25, "dow_name": "Wednesday", "is_weekend": false, "web_applicants": 1009.0, "web_applications": 5089.0, "total_applicants": 3229, "total_applications": 14770, "web_per_appl": 5.04, "tot_per_appl": 4.57, "web_share_appl": 0.31}, {"date_str": "2026-02-26", "day_num": 26, "dow_name": "Thursday", "is_weekend": false, "web_applicants": 1012.0, "web_applications": 4773.0, "total_applicants": 3201, "total_applications": 14031, "web_per_appl": 4.72, "tot_per_appl": 4.38, "web_share_appl": 0.32}, {"date_str": "2026-02-27", "day_num": 27, "dow_name": "Friday", "is_weekend": false, "web_applicants": 870.0, "web_applications": 4329.0, "total_applicants": 2835, "total_applications": 11975, "web_per_appl": 4.98, "tot_per_appl": 4.22, "web_share_appl": 0.31}, {"date_str": "2026-02-28", "day_num": 28, "dow_name": "Saturday", "is_weekend": true, "web_applicants": 485.0, "web_applications": 2419.0, "total_applicants": 1972, "total_applications": 7976, "web_per_appl": 4.99, "tot_per_appl": 4.04, "web_share_appl": 0.25}], "jan25_dow": [{"dow": "Monday", "web_applicants": 1014.2, "web_applications": 5366.0, "total_applicants": 2975.5, "total_applications": 14395.0, "web_per_appl": 5.28, "tot_per_appl": 4.83, "n": 4}, {"dow": "Tuesday", "web_applicants": 970.2, "web_applications": 5199.8, "total_applicants": 2937.8, "total_applications": 14807.2, "web_per_appl": 5.37, "tot_per_appl": 5.04, "n": 4}, {"dow": "Wednesday", "web_applicants": 913.8, "web_applications": 4748.6, "total_applicants": 2857.6, "total_applications": 14053.0, "web_per_appl": 5.09, "tot_per_appl": 4.79, "n": 5}, {"dow": "Thursday", "web_applicants": 969.6, "web_applications": 4847.2, "total_applicants": 3030.2, "total_applications": 14749.8, "web_per_appl": 4.99, "tot_per_appl": 4.85, "n": 5}, {"dow": "Friday", "web_applicants": 809.4, "web_applications": 3963.4, "total_applicants": 2701.0, "total_applications": 12444.6, "web_per_appl": 4.91, "tot_per_appl": 4.61, "n": 5}], "jan26_dow": [{"dow": "Monday", "web_applicants": 838.8, "web_applications": 4662.5, "total_applicants": 2632.5, "total_applications": 12864.2, "web_per_appl": 5.58, "tot_per_appl": 4.84, "n": 4}, {"dow": "Tuesday", "web_applicants": 856.0, "web_applications": 5016.8, "total_applicants": 2855.0, "total_applications": 14203.2, "web_per_appl": 5.87, "tot_per_appl": 4.98, "n": 4}, {"dow": "Wednesday", "web_applicants": 869.0, "web_applications": 4533.5, "total_applicants": 2820.5, "total_applications": 13567.0, "web_per_appl": 5.22, "tot_per_appl": 4.82, "n": 4}, {"dow": "Thursday", "web_applicants": 744.6, "web_applications": 4296.2, "total_applicants": 2478.4, "total_applications": 11898.6, "web_per_appl": 5.7, "tot_per_appl": 4.74, "n": 5}, {"dow": "Friday", "web_applicants": 731.0, "web_applications": 4270.6, "total_applicants": 2478.0, "total_applications": 11745.4, "web_per_appl": 5.83, "tot_per_appl": 4.75, "n": 5}], "feb25_dow": [{"dow": "Monday", "web_applicants": 1047.0, "web_applications": 6540.5, "total_applicants": 3068.0, "total_applications": 16419.5, "web_per_appl": 6.29, "tot_per_appl": 5.37, "n": 4}, {"dow": "Tuesday", "web_applicants": 987.2, "web_applications": 5383.8, "total_applicants": 3101.8, "total_applications": 16344.5, "web_per_appl": 5.46, "tot_per_appl": 5.28, "n": 4}, {"dow": "Wednesday", "web_applicants": 977.8, "web_applications": 4881.5, "total_applicants": 2999.0, "total_applications": 14771.0, "web_per_appl": 5.0, "tot_per_appl": 4.93, "n": 4}, {"dow": "Thursday", "web_applicants": 974.5, "web_applications": 5347.0, "total_applicants": 2990.8, "total_applications": 15414.8, "web_per_appl": 5.48, "tot_per_appl": 5.16, "n": 4}, {"dow": "Friday", "web_applicants": 813.2, "web_applications": 4468.5, "total_applicants": 2683.5, "total_applications": 13188.2, "web_per_appl": 5.48, "tot_per_appl": 4.91, "n": 4}], "feb26_dow": [{"dow": "Monday", "web_applicants": 1066.5, "web_applications": 5709.0, "total_applicants": 3245.8, "total_applications": 15421.8, "web_per_appl": 5.35, "tot_per_appl": 4.75, "n": 4}, {"dow": "Tuesday", "web_applicants": 999.2, "web_applications": 5208.0, "total_applicants": 3153.8, "total_applications": 14823.2, "web_per_appl": 5.21, "tot_per_appl": 4.7, "n": 4}, {"dow": "Wednesday", "web_applicants": 960.2, "web_applications": 4973.5, "total_applicants": 3189.8, "total_applications": 14612.2, "web_per_appl": 5.18, "tot_per_appl": 4.58, "n": 4}, {"dow": "Thursday", "web_applicants": 966.8, "web_applications": 4533.5, "total_applicants": 3125.2, "total_applications": 13521.5, "web_per_appl": 4.69, "tot_per_appl": 4.33, "n": 4}, {"dow": "Friday", "web_applicants": 800.8, "web_applications": 4072.8, "total_applicants": 2703.2, "total_applications": 11806.0, "web_per_appl": 5.08, "tot_per_appl": 4.37, "n": 4}], "jan25_wom": [{"week": "W1: Jan 01\u2013Jan 07", "week_num": 1, "web_applicants": 828.2, "web_applications": 4227.6, "total_applicants": 2562.2, "total_applications": 11998.6, "web_per_appl": 5.01, "tot_per_appl": 4.59, "n": 5}, {"week": "W2: Jan 08\u2013Jan 14", "week_num": 2, "web_applicants": 951.2, "web_applications": 4954.8, "total_applicants": 2957.8, "total_applications": 14313.0, "web_per_appl": 5.19, "tot_per_appl": 4.83, "n": 5}, {"week": "W3: Jan 15\u2013Jan 21", "week_num": 3, "web_applicants": 954.8, "web_applications": 4802.0, "total_applicants": 2939.6, "total_applications": 14108.0, "web_per_appl": 5.02, "tot_per_appl": 4.79, "n": 5}, {"week": "W4: Jan 22\u2013Jan 28", "week_num": 4, "web_applicants": 965.2, "web_applications": 5173.8, "total_applicants": 2991.2, "total_applications": 14576.0, "web_per_appl": 5.34, "tot_per_appl": 4.86, "n": 5}, {"week": "W5: Jan 29\u2013Jan 31", "week_num": 5, "web_applicants": 968.3, "web_applications": 4756.0, "total_applicants": 3114.3, "total_applications": 16022.7, "web_per_appl": 4.9, "tot_per_appl": 5.13, "n": 3}], "jan26_wom": [{"week": "W1: Jan 01\u2013Jan 07", "week_num": 1, "web_applicants": 717.2, "web_applications": 4073.8, "total_applicants": 2372.2, "total_applications": 11836.8, "web_per_appl": 5.61, "tot_per_appl": 4.91, "n": 5}, {"week": "W2: Jan 08\u2013Jan 14", "week_num": 2, "web_applicants": 806.6, "web_applications": 4541.8, "total_applicants": 2695.4, "total_applications": 13449.6, "web_per_appl": 5.62, "tot_per_appl": 4.98, "n": 5}, {"week": "W3: Jan 15\u2013Jan 21", "week_num": 3, "web_applicants": 886.2, "web_applications": 5036.8, "total_applicants": 2863.4, "total_applications": 13744.6, "web_per_appl": 5.74, "tot_per_appl": 4.81, "n": 5}, {"week": "W4: Jan 22\u2013Jan 28", "week_num": 4, "web_applicants": 771.0, "web_applications": 4248.8, "total_applicants": 2551.4, "total_applications": 11797.0, "web_per_appl": 5.53, "tot_per_appl": 4.6, "n": 5}, {"week": "W5: Jan 29\u2013Jan 30", "week_num": 5, "web_applicants": 864.0, "web_applications": 5089.5, "total_applicants": 2801.0, "total_applications": 13309.0, "web_per_appl": 5.89, "tot_per_appl": 4.75, "n": 2}], "feb25_wom": [{"week": "W1: Feb 03\u2013Feb 07", "week_num": 1, "web_applicants": 991.2, "web_applications": 5688.6, "total_applicants": 3037.2, "total_applications": 15351.6, "web_per_appl": 5.82, "tot_per_appl": 5.07, "n": 5}, {"week": "W2: Feb 10\u2013Feb 14", "week_num": 2, "web_applicants": 965.0, "web_applications": 5573.8, "total_applicants": 2953.0, "total_applications": 15536.0, "web_per_appl": 5.73, "tot_per_appl": 5.25, "n": 5}, {"week": "W3: Feb 17\u2013Feb 21", "week_num": 3, "web_applicants": 974.4, "web_applications": 5061.4, "total_applicants": 3044.2, "total_applications": 15215.2, "web_per_appl": 5.17, "tot_per_appl": 4.99, "n": 5}, {"week": "W4: Feb 24\u2013Feb 28", "week_num": 4, "web_applicants": 909.2, "web_applications": 4973.2, "total_applicants": 2840.0, "total_applications": 14807.6, "web_per_appl": 5.46, "tot_per_appl": 5.21, "n": 5}], "feb26_wom": [{"week": "W1: Feb 02\u2013Feb 06", "week_num": 1, "web_applicants": 935.8, "web_applications": 4661.0, "total_applicants": 3009.0, "total_applications": 13668.2, "web_per_appl": 4.99, "tot_per_appl": 4.54, "n": 5}, {"week": "W2: Feb 09\u2013Feb 13", "week_num": 2, "web_applicants": 907.0, "web_applications": 4651.8, "total_applicants": 2971.6, "total_applications": 13564.6, "web_per_appl": 5.1, "tot_per_appl": 4.56, "n": 5}, {"week": "W3: Feb 16\u2013Feb 20", "week_num": 3, "web_applicants": 968.2, "web_applications": 5141.8, "total_applicants": 3143.8, "total_applications": 14438.6, "web_per_appl": 5.3, "tot_per_appl": 4.59, "n": 5}, {"week": "W4: Feb 23\u2013Feb 27", "week_num": 4, "web_applicants": 1023.8, "web_applications": 5142.8, "total_applicants": 3209.8, "total_applications": 14476.4, "web_per_appl": 5.01, "tot_per_appl": 4.5, "n": 5}], "jan25_kpi": {"web_app_avg": 930.5, "web_appl_avg": 4785.2, "tot_app_avg": 2895.5, "tot_appl_avg": 14045.5, "web_per_appl": 5.11, "tot_per_appl": 4.82, "web_share_appl": 32.0, "web_share_apps": 34.0, "wknd_web_app": 424.2, "wknd_tot_app": 1699.9, "wknd_web_appl": 2410.8, "wknd_tot_appl": 7599.6, "n_wkdays": 23, "n_wknds": 8, "web_app_total": 21402, "web_appl_total": 110059, "tot_app_total": 66597, "tot_appl_total": 323046}, "jan26_kpi": {"web_app_avg": 801.5, "web_appl_avg": 4531.1, "tot_app_avg": 2637.0, "tot_appl_avg": 12761.7, "web_per_appl": 5.65, "tot_per_appl": 4.82, "web_share_appl": 30.1, "web_share_apps": 35.3, "wknd_web_app": 429.2, "wknd_tot_app": 1714.2, "wknd_web_appl": 2603.8, "wknd_tot_appl": 7770.0, "n_wkdays": 22, "n_wknds": 9, "web_app_total": 17633, "web_appl_total": 99685, "tot_app_total": 58014, "tot_appl_total": 280758}, "feb25_kpi": {"web_app_avg": 960.0, "web_appl_avg": 5324.2, "tot_app_avg": 2968.6, "tot_appl_avg": 15227.6, "web_per_appl": 5.54, "tot_per_appl": 5.13, "web_share_appl": 32.3, "web_share_apps": 34.7, "wknd_web_app": 498.9, "wknd_tot_app": 1786.9, "wknd_web_appl": 3289.9, "wknd_tot_appl": 8851.6, "n_wkdays": 20, "n_wknds": 8, "web_app_total": 19199, "web_appl_total": 106485, "tot_app_total": 59372, "tot_appl_total": 304552}, "feb26_kpi": {"web_app_avg": 958.7, "web_appl_avg": 4899.4, "tot_app_avg": 3083.6, "tot_appl_avg": 14037.0, "web_per_appl": 5.1, "tot_per_appl": 4.55, "web_share_appl": 31.0, "web_share_apps": 34.8, "wknd_web_app": 475.5, "wknd_tot_app": 1854.1, "wknd_web_appl": 2518.8, "wknd_tot_appl": 7920.5, "n_wkdays": 20, "n_wknds": 8, "web_app_total": 19174, "web_appl_total": 97987, "tot_app_total": 61671, "tot_appl_total": 280739}};
+
+const C = {
+  jan25:'#3b82f6', jan26:'#1d4ed8',
+  feb25:'#f97316', feb26:'#c2410c',
+  web:'#6366f1', total:'#059669',
+  pos:'#16a34a', neg:'#dc2626'
+};
+const DOW = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+
+// ======= HELPERS =======
+function fmtN(v) {
+  if (v == null || isNaN(v)) return '—';
+  return Math.round(v).toLocaleString();
+}
+function fmtD(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (+v).toFixed(2);
+}
+function fmtP(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (+v).toFixed(1) + '%';
+}
+function chgPct(a, b) {
+  if (!b) return null;
+  return (a - b) / b * 100;
+}
+function pillHtml(v, inv=false) {
+  if (v == null) return '';
+  const good = inv ? v < 0 : v >= 0;
+  const cls = good ? 'pill-up' : 'pill-dn';
+  const sign = v >= 0 ? '+' : '';
+  return `<span class="pill ${cls}">${sign}${v.toFixed(1)}%</span>`;
+}
+function chgHtml(curr, base, fmt='num', inv=false) {
+  const v = chgPct(curr, base);
+  if (v == null) return '';
+  const good = inv ? v < 0 : v >= 0;
+  const cls = Math.abs(v) < 0.5 ? 'flat' : (good ? 'up' : 'dn');
+  const sign = v >= 0 ? '+' : '';
+  return `<span class="kpi-chg ${cls}">${sign}${v.toFixed(1)}%</span>`;
+}
+
+// ======= KPI RENDER =======
+function renderKPIs(containerId, curr, base, currLabel, baseLabel) {
+  const container = document.getElementById(containerId);
+  const metrics = [
+    { label: 'Web Applicants/Day', cKey: 'web_app_avg', fmt: 'num' },
+    { label: 'Web Applications/Day', cKey: 'web_appl_avg', fmt: 'num' },
+    { label: 'Total Applicants/Day', cKey: 'tot_app_avg', fmt: 'num' },
+    { label: 'Total Applications/Day', cKey: 'tot_appl_avg', fmt: 'num' },
+    { label: 'Web Apps/Applicant', cKey: 'web_per_appl', fmt: 'dec' },
+    { label: 'Total Apps/Applicant', cKey: 'tot_per_appl', fmt: 'dec' },
+    { label: 'Web Share (Appl.)', cKey: 'web_share_appl', fmt: 'pct' },
+    { label: 'Web Share (Apps)', cKey: 'web_share_apps', fmt: 'pct' },
+  ];
+  container.innerHTML = metrics.map(m => {
+    const cv = curr[m.cKey], bv = base[m.cKey];
+    const f = m.fmt === 'dec' ? fmtD : m.fmt === 'pct' ? v => fmtP(v) : fmtN;
+    const chg = chgPct(cv, bv);
+    const isBig = Math.abs(chg || 0) > 5;
+    const borderColor = chg == null ? '#e2e8f0' : Math.abs(chg) < 0.5 ? '#94a3b8' : chg > 0 ? C.pos : C.neg;
+    return `<div class="kpi" style="border-top-color:${borderColor}">
+      <div class="kpi-lbl">${m.label}</div>
+      <div class="kpi-pair">
+        <span class="kpi-main" style="color:${borderColor}">${f(cv)}</span>
+        <span class="kpi-prev">${f(bv)}</span>
+      </div>
+      ${chgHtml(cv, bv, m.fmt)}
+    </div>`;
+  }).join('');
+}
+
+// ======= DAILY LINE CHART =======
+function makeDailyChart(canvasId, data25, data26, label, keyFn, color25, color26) {
+  // Use day-of-month as x axis (1–28/31), weekdays only
+  const wk25 = data25.filter(d => !d.is_weekend);
+  const wk26 = data26.filter(d => !d.is_weekend);
+  const labels = wk25.map(d => d.date_str.slice(8)); // day of month
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: label + ' 2025',
+          data: wk25.map(keyFn),
+          borderColor: color25, backgroundColor: color25 + '22',
+          borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false
+        },
+        {
+          label: label + ' 2026',
+          data: wk26.map(keyFn),
+          borderColor: color26, backgroundColor: color26 + '22',
+          borderWidth: 2, pointRadius: 3, tension: 0.3, borderDash: [5,3], fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 14, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y).toLocaleString()}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0 } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v } }
+      }
+    }
+  });
+}
+
+// ======= DOW BAR CHART =======
+function makeDowChart(canvasId, dow25, dow26, keyFn, label25, label26, c25, c26, isFmt='num') {
+  const fmt = isFmt === 'dec' ? v => (+v).toFixed(2) : v => Math.round(v).toLocaleString();
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: DOW.map(d => d.slice(0,3)),
+      datasets: [
+        { label: label25, data: DOW.map(d => { const r = dow25.find(x=>x.dow===d); return r ? keyFn(r) : 0; }), backgroundColor: c25 + 'cc', borderColor: c25, borderWidth: 1.5, borderRadius: 4 },
+        { label: label26, data: DOW.map(d => { const r = dow26.find(x=>x.dow===d); return r ? keyFn(r) : 0; }), backgroundColor: c26 + 'cc', borderColor: c26, borderWidth: 1.5, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => isFmt === 'dec' ? v.toFixed(1) : v >= 1000 ? (v/1000).toFixed(0)+'K' : v } }
+      }
+    }
+  });
+}
+
+// ======= WOM RENDER =======
+function renderWOM(containerId, wom25, wom26) {
+  const container = document.getElementById(containerId);
+  const weeks = [1,2,3,4];
+  let html = '<div class="wom-inner">';
+  weeks.forEach(wk => {
+    const r25 = wom25.find(w => w.week_num === wk);
+    const r26 = wom26.find(w => w.week_num === wk);
+    if (!r25 || !r26) return;
+    const appl_chg = chgPct(r26.web_applications, r25.web_applications);
+    const ratio_chg = chgPct(r26.web_per_appl, r25.web_per_appl);
+    const ratioColor = ratio_chg < -3 ? '#dc2626' : ratio_chg > 3 ? '#16a34a' : '#64748b';
+    html += `<div class="wom-card">
+      <div class="wom-label">W${wk}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${r26.week}</div>
+      <div class="wom-stat"><span>Web Appl.</span><span class="wom-val">${Math.round(r26.web_applications).toLocaleString()}</span></div>
+      <div class="wom-stat"><span>vs '25</span><span>${pillHtml(appl_chg)}</span></div>
+      <div class="wom-stat" style="margin-top:4px"><span>Apps/Appl.</span><span class="wom-val" style="color:${ratioColor}">${r26.web_per_appl.toFixed(2)}</span></div>
+      <div class="wom-stat"><span>vs '25</span><span>${pillHtml(ratio_chg)}</span></div>
+      <div class="wom-stat" style="margin-top:4px"><span>Tot.Apps</span><span class="wom-val">${(r26.total_applications/1000).toFixed(1)}K</span></div>
+      <div class="wom-stat"><span>Tot.Appl.</span><span class="wom-val">${Math.round(r26.total_applicants).toLocaleString()}</span></div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ======= FULL TABLE =======
+function renderFullTable(tableId, curr, base, currLabel, baseLabel) {
+  const rows = [
+    { label: 'WEEKDAY VOLUME METRICS', section: true },
+    { label: 'Web Applicants / Day', k: 'web_app_avg', fmt: 'num' },
+    { label: 'Web Applications / Day', k: 'web_appl_avg', fmt: 'num' },
+    { label: 'Total Applicants / Day', k: 'tot_app_avg', fmt: 'num' },
+    { label: 'Total Applications / Day', k: 'tot_appl_avg', fmt: 'num' },
+    { label: 'ENGAGEMENT / RATIO METRICS', section: true },
+    { label: 'Web Apps per Applicant', k: 'web_per_appl', fmt: 'dec' },
+    { label: 'Total Apps per Applicant', k: 'tot_per_appl', fmt: 'dec' },
+    { label: 'SHARE METRICS', section: true },
+    { label: 'Web Share of Applicants', k: 'web_share_appl', fmt: 'pct' },
+    { label: 'Web Share of Applications', k: 'web_share_apps', fmt: 'pct' },
+    { label: 'WEEKEND VOLUME (avg/day)', section: true },
+    { label: 'Weekend Web Applicants', k: 'wknd_web_app', fmt: 'num' },
+    { label: 'Weekend Total Applicants', k: 'wknd_tot_app', fmt: 'num' },
+    { label: 'Weekend Web Applications', k: 'wknd_web_appl', fmt: 'num' },
+    { label: 'Weekend Total Applications', k: 'wknd_tot_appl', fmt: 'num' },
+    { label: 'MONTHLY TOTALS (weekdays only)', section: true },
+    { label: 'Web Applicants (total)', k: 'web_app_total', fmt: 'num' },
+    { label: 'Web Applications (total)', k: 'web_appl_total', fmt: 'num' },
+    { label: 'Total Applicants (total)', k: 'tot_app_total', fmt: 'num' },
+    { label: 'Total Applications (total)', k: 'tot_appl_total', fmt: 'num' },
+  ];
+
+  const fmtFn = (v, fmt) => fmt === 'dec' ? fmtD(v) : fmt === 'pct' ? fmtP(v) : fmtN(v);
+  let html = `<thead><tr>
+    <th>Metric</th>
+    <th style="color:#1d4ed8">${baseLabel}</th>
+    <th style="color:#1e3a8a">${currLabel}</th>
+    <th>YoY Change</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    if (r.section) {
+      html += `<tr class="section-hdr"><td colspan="4">${r.label}</td></tr>`;
+      return;
+    }
+    const bv = base[r.k], cv = curr[r.k];
+    const chg = chgPct(cv, bv);
+    const chgColor = chg == null ? '' : Math.abs(chg) < 0.5 ? 'color:#64748b' : chg > 0 ? 'color:#15803d' : 'color:#b91c1c';
+    const sign = chg != null && chg >= 0 ? '+' : '';
+    html += `<tr>
+      <td>${r.label}</td>
+      <td>${fmtFn(bv, r.fmt)}</td>
+      <td style="font-weight:600">${fmtFn(cv, r.fmt)}</td>
+      <td class="chg-col" style="${chgColor}">${chg != null ? sign + chg.toFixed(1)+'%' : '—'}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById(tableId).innerHTML = html;
+}
+
+// ======= BOTH TABLE =======
+function renderBothTable() {
+  const metrics = [
+    { label: 'Web Applicants/Day (wkday avg)', k: 'web_app_avg', fmt: 'num' },
+    { label: 'Web Applications/Day', k: 'web_appl_avg', fmt: 'num' },
+    { label: 'Total Applicants/Day', k: 'tot_app_avg', fmt: 'num' },
+    { label: 'Total Applications/Day', k: 'tot_appl_avg', fmt: 'num' },
+    { label: 'Web Apps/Applicant', k: 'web_per_appl', fmt: 'dec' },
+    { label: 'Total Apps/Applicant', k: 'tot_per_appl', fmt: 'dec' },
+    { label: 'Web Share (Applicants)', k: 'web_share_appl', fmt: 'pct' },
+    { label: 'Web Share (Applications)', k: 'web_share_apps', fmt: 'pct' },
+    { label: 'Wknd Web Applicants/day', k: 'wknd_web_app', fmt: 'num' },
+    { label: 'Wknd Total Applicants/day', k: 'wknd_tot_app', fmt: 'num' },
+  ];
+  const jan25 = D.jan25_kpi, jan26 = D.jan26_kpi, feb25 = D.feb25_kpi, feb26 = D.feb26_kpi;
+  const fmtFn = (v,f) => f==='dec' ? fmtD(v) : f==='pct' ? fmtP(v) : fmtN(v);
+  let html = `<thead><tr>
+    <th>Metric</th>
+    <th style="color:#3b82f6">Jan 2025</th>
+    <th style="color:#1d4ed8">Jan 2026</th>
+    <th>Jan YoY</th>
+    <th style="color:#f97316">Feb 2025</th>
+    <th style="color:#c2410c">Feb 2026</th>
+    <th>Feb YoY</th>
+  </tr></thead><tbody>`;
+  metrics.forEach(m => {
+    const j25 = jan25[m.k], j26 = jan26[m.k], f25 = feb25[m.k], f26 = feb26[m.k];
+    const jchg = chgPct(j26, j25), fchg = chgPct(f26, f25);
+    const jClr = jchg == null ? '' : Math.abs(jchg) < 0.5 ? 'color:#64748b' : jchg > 0 ? 'color:#15803d;font-weight:700' : 'color:#b91c1c;font-weight:700';
+    const fClr = fchg == null ? '' : Math.abs(fchg) < 0.5 ? 'color:#64748b' : fchg > 0 ? 'color:#15803d;font-weight:700' : 'color:#b91c1c;font-weight:700';
+    const jsign = jchg != null && jchg >= 0 ? '+' : '';
+    const fsign = fchg != null && fchg >= 0 ? '+' : '';
+    html += `<tr>
+      <td>${m.label}</td>
+      <td>${fmtFn(j25,m.fmt)}</td><td style="font-weight:600">${fmtFn(j26,m.fmt)}</td>
+      <td style="${jClr}">${jchg != null ? jsign+jchg.toFixed(1)+'%' : '—'}</td>
+      <td>${fmtFn(f25,m.fmt)}</td><td style="font-weight:600">${fmtFn(f26,m.fmt)}</td>
+      <td style="${fClr}">${fchg != null ? fsign+fchg.toFixed(1)+'%' : '—'}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('both-table').innerHTML = html;
+}
+
+// ======= SIDE BY SIDE BAR CHARTS =======
+function renderBothCharts() {
+  const periods = ['Jan 2025','Jan 2026','Feb 2025','Feb 2026'];
+  const colors = [C.jan25, C.jan26, C.feb25, C.feb26];
+  const webRatios = [D.jan25_kpi.web_per_appl, D.jan26_kpi.web_per_appl, D.feb25_kpi.web_per_appl, D.feb26_kpi.web_per_appl];
+  const totRatios = [D.jan25_kpi.tot_per_appl, D.jan26_kpi.tot_per_appl, D.feb25_kpi.tot_per_appl, D.feb26_kpi.tot_per_appl];
+
+  function makeBarChart(canvasId, labels, data, colors, yMin, yMax, fmt='dec') {
+    new Chart(document.getElementById(canvasId).getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: '', data, backgroundColor: colors.map(c => c+'cc'), borderColor: colors, borderWidth: 2, borderRadius: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${(+ctx.parsed.y).toFixed(2)}` } },
+          datalabels: { display: false }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { suggestedMin: yMin, suggestedMax: yMax, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 }, callback: v => v.toFixed(1) } }
+        }
+      }
+    });
+  }
+  makeBarChart('both-ratio-bar', periods, webRatios, colors, 4.5, 6.2);
+  makeBarChart('both-tot-ratio-bar', periods, totRatios, colors, 4.0, 5.5);
+
+  // DOW side-by-side for all 4 periods
+  const allDowData = {
+    jan25: D.jan25_dow, jan26: D.jan26_dow,
+    feb25: D.feb25_dow, feb26: D.feb26_dow
+  };
+  function makeDow4Chart(canvasId, keyFn, fmt='num') {
+    const fmtCb = fmt==='dec' ? v=>(+v).toFixed(2) : v=>Math.round(v).toLocaleString();
+    new Chart(document.getElementById(canvasId).getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: DOW.map(d => d.slice(0,3)),
+        datasets: [
+          { label:'Jan 2025', data: DOW.map(d=>{const r=allDowData.jan25.find(x=>x.dow===d);return r?keyFn(r):0;}), backgroundColor: C.jan25+'aa', borderColor:C.jan25, borderWidth:1, borderRadius:2 },
+          { label:'Jan 2026', data: DOW.map(d=>{const r=allDowData.jan26.find(x=>x.dow===d);return r?keyFn(r):0;}), backgroundColor: C.jan26+'aa', borderColor:C.jan26, borderWidth:1, borderRadius:2 },
+          { label:'Feb 2025', data: DOW.map(d=>{const r=allDowData.feb25.find(x=>x.dow===d);return r?keyFn(r):0;}), backgroundColor: C.feb25+'aa', borderColor:C.feb25, borderWidth:1, borderRadius:2 },
+          { label:'Feb 2026', data: DOW.map(d=>{const r=allDowData.feb26.find(x=>x.dow===d);return r?keyFn(r):0;}), backgroundColor: C.feb26+'aa', borderColor:C.feb26, borderWidth:1, borderRadius:2 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'top', labels:{usePointStyle:true,padding:12,font:{size:11}} }, tooltip:{ callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtCb(ctx.parsed.y)}`} } },
+        scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'},ticks:{font:{size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}} }
+      }
+    });
+  }
+  makeDow4Chart('both-dow-app', r => r.web_applicants);
+  makeDow4Chart('both-dow-appl', r => r.web_applications);
+}
+
+// ======= WEEKEND TABLE =======
+function renderWeekendTable() {
+  const rows = [
+    {label:'Web Applicants (avg/day)', k:'wknd_web_app',fmt:'num'},
+    {label:'Web Applications (avg/day)', k:'wknd_web_appl',fmt:'num'},
+    {label:'Total Applicants (avg/day)', k:'wknd_tot_app',fmt:'num'},
+    {label:'Total Applications (avg/day)', k:'wknd_tot_appl',fmt:'num'},
+  ];
+  const j25=D.jan25_kpi,j26=D.jan26_kpi,f25=D.feb25_kpi,f26=D.feb26_kpi;
+  const fmtFn=(v,f)=>f==='dec'?fmtD(v):f==='pct'?fmtP(v):fmtN(v);
+  let html=`<thead><tr><th>Metric</th><th style="color:#3b82f6">Jan 2025</th><th style="color:#1d4ed8">Jan 2026</th><th>Jan YoY</th><th style="color:#f97316">Feb 2025</th><th style="color:#c2410c">Feb 2026</th><th>Feb YoY</th></tr></thead><tbody>`;
+  rows.forEach(m=>{
+    const jc=chgPct(j26[m.k],j25[m.k]),fc=chgPct(f26[m.k],f25[m.k]);
+    const jClr=jc==null?'':Math.abs(jc)<0.5?'color:#64748b':jc>0?'color:#15803d;font-weight:700':'color:#b91c1c;font-weight:700';
+    const fClr=fc==null?'':Math.abs(fc)<0.5?'color:#64748b':fc>0?'color:#15803d;font-weight:700':'color:#b91c1c;font-weight:700';
+    html+=`<tr><td>${m.label}</td><td>${fmtFn(j25[m.k],m.fmt)}</td><td>${fmtFn(j26[m.k],m.fmt)}</td><td style="${jClr}">${jc!=null?(jc>=0?'+':'')+jc.toFixed(1)+'%':'—'}</td><td>${fmtFn(f25[m.k],m.fmt)}</td><td>${fmtFn(f26[m.k],m.fmt)}</td><td style="${fClr}">${fc!=null?(fc>=0?'+':'')+fc.toFixed(1)+'%':'—'}</td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('wknd-table').innerHTML=html;
+}
+
+// ======= SECTION TOGGLE =======
+function showSection(which, btn) {
+  ['jan','feb','both'].forEach(s => {
+    document.getElementById('sec-'+s).style.display = s===which ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ======= INIT ALL =======
+// January KPIs
+renderKPIs('jan-kpis', D.jan26_kpi, D.jan25_kpi, 'Jan 2026', 'Jan 2025');
+renderKPIs('feb-kpis', D.feb26_kpi, D.feb25_kpi, 'Feb 2026', 'Feb 2025');
+
+// January daily charts
+makeDailyChart('jan-daily-web-app', D.jan25_daily, D.jan26_daily, 'Web Applicants', r=>r.web_applicants, C.jan25, C.jan26);
+makeDailyChart('jan-daily-tot-appl', D.jan25_daily, D.jan26_daily, 'Total Applications', r=>r.total_applications, C.jan25, C.jan26);
+
+// January DOW
+makeDowChart('jan-dow-ratio', D.jan25_dow, D.jan26_dow, r=>r.web_per_appl, 'Jan 2025 Web Ratio', 'Jan 2026 Web Ratio', C.jan25, C.jan26, 'dec');
+makeDowChart('jan-dow-app', D.jan25_dow, D.jan26_dow, r=>r.web_applicants, 'Jan 2025 Web Appl.', 'Jan 2026 Web Appl.', C.jan25, C.jan26);
+
+// January WOM
+renderWOM('jan-wom', D.jan25_wom, D.jan26_wom);
+
+// January full table
+renderFullTable('jan-full-table', D.jan26_kpi, D.jan25_kpi, 'Jan 2026', 'Jan 2025');
+
+// February daily charts
+makeDailyChart('feb-daily-web-app', D.feb25_daily, D.feb26_daily, 'Web Applicants', r=>r.web_applicants, C.feb25, C.feb26);
+makeDailyChart('feb-daily-tot-appl', D.feb25_daily, D.feb26_daily, 'Total Applications', r=>r.total_applications, C.feb25, C.feb26);
+
+// February DOW
+makeDowChart('feb-dow-ratio', D.feb25_dow, D.feb26_dow, r=>r.web_per_appl, 'Feb 2025 Web Ratio', 'Feb 2026 Web Ratio', C.feb25, C.feb26, 'dec');
+makeDowChart('feb-dow-app', D.feb25_dow, D.feb26_dow, r=>r.total_applications, 'Feb 2025 Total Apps', 'Feb 2026 Total Apps', C.feb25, C.feb26);
+
+// February WOM
+renderWOM('feb-wom', D.feb25_wom, D.feb26_wom);
+
+// February full table
+renderFullTable('feb-full-table', D.feb26_kpi, D.feb25_kpi, 'Feb 2026', 'Feb 2025');
+
+// Both section
+renderBothTable();
+renderBothCharts();
+renderWeekendTable();
+</script>
+</body>
+</html>
