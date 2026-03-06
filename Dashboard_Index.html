@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Applicant Analytics — Dashboard Hub</title>
+<style>
+:root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --header-bg: #1a1a2e;
+    --text: #212529;
+    --text-sec: #6c757d;
+    --text-light: #ffffff;
+    --accent: #4C72B0;
+    --green: #28a745;
+    --red: #dc3545;
+    --orange: #DD8452;
+    --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+.container { max-width:960px; margin:0 auto; padding:24px 16px; }
+
+.hero { background:var(--header-bg); color:var(--text-light); border-radius:var(--radius); padding:36px 32px; margin-bottom:28px; text-align:center; }
+.hero h1 { font-size:24px; font-weight:700; margin-bottom:6px; }
+.hero p { font-size:14px; opacity:0.75; max-width:600px; margin:0 auto; }
+.hero .meta { margin-top:14px; display:flex; justify-content:center; gap:24px; font-size:12px; opacity:0.6; }
+
+.cards { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:28px; }
+
+.card { background:var(--card); border-radius:var(--radius); padding:24px 28px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:4px solid var(--accent); transition:transform 0.15s, box-shadow 0.15s; text-decoration:none; color:inherit; display:block; }
+.card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.1); }
+.card .num { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin-bottom:6px; }
+.card h2 { font-size:17px; font-weight:600; margin-bottom:8px; color:var(--text); }
+.card .desc { font-size:13px; color:var(--text-sec); margin-bottom:14px; line-height:1.5; }
+.card .highlights { display:flex; flex-wrap:wrap; gap:8px; }
+.card .tag { font-size:11px; padding:3px 10px; border-radius:12px; background:#f0f2f5; color:var(--text-sec); font-weight:500; }
+.card .tag.red { background:#fde8e8; color:var(--red); }
+.card .tag.green { background:#e6f4ea; color:var(--green); }
+.card .tag.blue { background:#e8f0fe; color:var(--accent); }
+
+.card:nth-child(2) { border-left-color:var(--orange); }
+.card:nth-child(2) .num { color:var(--orange); }
+.card:nth-child(3) { border-left-color:var(--green); }
+.card:nth-child(3) .num { color:var(--green); }
+.card:nth-child(4) { border-left-color:#C44E52; }
+.card:nth-child(4) .num { color:#C44E52; }
+
+.summary { background:var(--card); border-radius:var(--radius); padding:24px 28px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px; }
+.summary h3 { font-size:15px; font-weight:600; margin-bottom:12px; }
+.summary .finding { padding:10px 0; border-bottom:1px solid #f0f0f0; font-size:13px; color:var(--text-sec); display:flex; gap:10px; align-items:flex-start; }
+.summary .finding:last-child { border-bottom:none; }
+.summary .finding .icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.summary .finding strong { color:var(--text); }
+
+.footer { text-align:center; padding:16px; font-size:11px; color:var(--text-sec); }
+
+@media (max-width:700px) {
+    .cards { grid-template-columns:1fr; }
+    .hero { padding:24px 20px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="hero">
+        <h1>Premium Applicant Analytics</h1>
+        <p>Interactive dashboards analyzing applicant and application patterns for premium segment (CTC &ge; 30L, CTC/Exp &ge; 3)</p>
+        <div class="meta">
+            <span>Data: Jan 2025 – Mar 4, 2026</span>
+            <span>Complete week totals (Sun–Sat)</span>
+            <span>Updated: Mar 6, 2026</span>
+        </div>
+    </div>
+
+    <div class="cards">
+        <a class="card" href="./Premium_Applicant_Analysis.html">
+            <div class="num">Dashboard 1</div>
+            <h2>Premium Applicant Overview</h2>
+            <div class="desc">Monthly trends, Feb 2026 deep dive, day-of-week patterns, rolling averages with Feb 3 annotation. Covers web (desktop) and total premium applicants.</div>
+            <div class="highlights">
+                <span class="tag blue">Monthly KPIs</span>
+                <span class="tag blue">7-day Rolling Avg</span>
+                <span class="tag blue">Feb 3 Breakpoint</span>
+                <span class="tag blue">DOW Analysis</span>
+            </div>
+        </a>
+
+        <a class="card" href="./YoY_Comparison_Jan_Feb.html">
+            <div class="num">Dashboard 2</div>
+            <h2>Year-on-Year Comparison</h2>
+            <div class="desc">Jan 2026 vs Jan 2025 and Feb 2026 vs Feb 2025 — side-by-side comparison of applicants, applications, and engagement ratios.</div>
+            <div class="highlights">
+                <span class="tag green">Jan: +10.6% web engagement</span>
+                <span class="tag red">Feb: -8% web applications</span>
+                <span class="tag blue">DOW Breakdowns</span>
+            </div>
+        </a>
+
+        <a class="card" href="./Jobs_Applications_YoY.html">
+            <div class="num">Dashboard 3</div>
+            <h2>Jobs &amp; Applications Impact</h2>
+            <div class="desc">Analysis of job supply changes (organic vs acquired) and their impact on application volume. Impact decomposition showing organic jobs absorbed demand.</div>
+            <div class="highlights">
+                <span class="tag red">Acquired jobs -79.5%</span>
+                <span class="tag green">Apps only -7.8%</span>
+                <span class="tag blue">Waterfall Decomposition</span>
+            </div>
+        </a>
+
+        <a class="card" href="./Device_Analysis_Dashboard.html">
+            <div class="num">Dashboard 4</div>
+            <h2>Device-wise Deep Dive</h2>
+            <div class="desc">Full device breakdown (Web, Android, iOS, Mobile Web) for premium and all applicants. Week-by-week recovery analysis, device share shifts, engagement ratios.</div>
+            <div class="highlights">
+                <span class="tag red">Android: 55% of drop</span>
+                <span class="tag green">Web: recovered by W3-W4</span>
+                <span class="tag green">Mobile Web: +23% premium</span>
+            </div>
+        </a>
+    </div>
+
+    <div class="summary">
+        <h3>Executive Summary — Key Findings</h3>
+        <div class="finding">
+            <span class="icon">📉</span>
+            <div><strong>Feb 2026 saw a modest YoY decline in premium applications (-7.8%)</strong> despite a massive -79.5% cut in acquired jobs. Organic jobs absorbed the demand, proving the premium user base is resilient.</div>
+        </div>
+        <div class="finding">
+            <span class="icon">📱</span>
+            <div><strong>Android is the primary drag</strong>, accounting for 55% of the total application decline across both premium and all-applicant segments. Android engagement (apps/user) fell -11.4% YoY.</div>
+        </div>
+        <div class="finding">
+            <span class="icon">🖥️</span>
+            <div><strong>Web (Desktop) shows clear recovery</strong> — YoY gap closed from -18% in Week 1 to +3.4% by Week 3-4 for premium applications. Web users are the most resilient segment.</div>
+        </div>
+        <div class="finding">
+            <span class="icon">📈</span>
+            <div><strong>Mobile Web is the breakout performer</strong> — premium applications grew +23% YoY in Feb, accelerating to +54% by Week 4. Small base but fastest growing channel.</div>
+        </div>
+        <div class="finding">
+            <span class="icon">⚠️</span>
+            <div><strong>iOS engagement declined most steeply</strong> (-13.5% apps per applicant), even though applicant count grew +9.3%. iOS users are browsing but applying less.</div>
+        </div>
+        <div class="finding">
+            <span class="icon">✅</span>
+            <div><strong>Overall: the job cleanup had limited impact on premium users.</strong> The -36% job supply reduction only translated to -7.8% fewer applications, confirming that non-salary-matching jobs were low-relevance for this cohort.</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        All dashboards are self-contained HTML files — open directly in any browser, no server needed. Share via email, Slack, or shared drive.
+    </div>
+</div>
+</body>
+</html>
